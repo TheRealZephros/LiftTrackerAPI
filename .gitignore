@@ -1,0 +1,5 @@
+.env
+*.sqlite
+*.db
+.idea/
+.vscode/
