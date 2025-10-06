@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace api.models
+namespace api.Models
 {
     public class ExerciseSet
     {
         public int Id { get; set; }
         public int ExerciseId { get; set; }
+        public int ExerciseSessionId { get; set; }
         // Navigation property
         public Exercise? Exercise { get; set; }
         public int Repetitions { get; set; }

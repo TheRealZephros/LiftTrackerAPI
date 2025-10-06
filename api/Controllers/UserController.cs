@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using api.data;
-using api.models;
+using api.Data;
+using api.Dtos.User;
+using api.Models;
 using System.Linq;
 using BCrypt.Net;
 
@@ -45,17 +46,18 @@ namespace api.Controllers
 
             return Ok(new { UserId = user.Id });
         }
-    }
 
-    public class UserRegisterDto
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
+        [HttpDelete("delete")]
+        public IActionResult DeleteUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound();
 
-    public class UserLoginDto
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
+            _context.Users.Remove(user);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
     }
 }

@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.data;
-using api.models;
+using api.Data;
+using api.Dtos.Exercise;
+using api.Mappers;
+using api.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
@@ -21,25 +23,36 @@ namespace api.Controllers
         [HttpGet]
         public IActionResult GetAllExercises(int userId)
         {
-            var exercises = _context.Exercises.Where(e => !e.IsUsermade || e.UserId == userId).ToList();
+            var exercises = _context.Exercises
+                .Where(e => !e.IsUsermade || e.UserId == userId)
+                .ToList()
+                .Select(e => e.ToExerciseDto());
+            
             return Ok(exercises);
         }
-        [HttpPost("create")]
-        public IActionResult CreateExercise([FromBody] CreateExerciseDto exercise)
+
+        [HttpGet("{id}")]
+        public IActionResult GetExerciseById(int id)
         {
-            var newExercise = new Exercise
+            var exercise = _context.Exercises.FirstOrDefault(e => e.Id == id);
+            if (exercise == null)
             {
-                Name = exercise.Name,
-                Description = exercise.Description,
-                IsUsermade = exercise.IsUsermade,
-                UserId = exercise.UserId
-            };
+                return NotFound();
+            }
+            return Ok(exercise.ToExerciseDto());
+        }
+
+        [HttpPost("create")]
+        public IActionResult CreateExercise([FromBody] ExerciseDto exercise)
+        {
+            var newExercise = exercise.ToExercise();
             _context.Exercises.Add(newExercise);
             _context.SaveChanges();
-            return CreatedAtAction(nameof(GetAllExercises), new { id = newExercise.Id }, newExercise);
+            return CreatedAtAction(nameof(GetExerciseById), new { id = newExercise.Id }, newExercise);
         }
+
         [HttpPut("update/{id}")]
-        public IActionResult UpdateExercise(int id, [FromBody] UpdateExerciseDto exercise)
+        public IActionResult UpdateExercise(int id, [FromBody] ExerciseDto exercise)
         {
 
             var existingExercise = _context.Exercises.FirstOrDefault(e => e.Id == id);
@@ -59,7 +72,7 @@ namespace api.Controllers
         public IActionResult DeleteExercise(int id, [FromBody] DeleteExerciseDto exercise)
         {
             var existingExercise = _context.Exercises.FirstOrDefault(e => e.Id == id);
-            if (existingExercise == null || existingExercise.UserId != exercise.UserId)
+            if (existingExercise == null || existingExercise.UserId != exercise.Id)
             {
                 return NotFound();
             }
@@ -67,25 +80,5 @@ namespace api.Controllers
             _context.SaveChanges();
             return NoContent();
         }
-    }
-
-    public class CreateExerciseDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public bool IsUsermade { get; set; } = true;
-        public int? UserId { get; set; } // Nullable for predefined exercises
-    }
-
-    public class UpdateExerciseDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public bool IsUsermade { get; set; } = true;
-        public int? UserId { get; set; } // Nullable for predefined exercises
-    }
-    public class DeleteExerciseDto
-    {
-        public int? UserId { get; set; } // Nullable for predefined exercises
     }
 }

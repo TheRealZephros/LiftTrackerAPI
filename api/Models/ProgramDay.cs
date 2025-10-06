@@ -3,23 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace api.models
+namespace api.Models
 {
     public enum Weekday
     {
-        Monday = 1,
-        Tuesday = 2,
-        Wednesday = 3,
-        Thursday = 4,
-        Friday = 5,
-        Saturday = 6,
-        Sunday = 7
+        Monday = 0,
+        Tuesday = 1,
+        Wednesday = 2,
+        Thursday = 3,
+        Friday = 4,
+        Saturday = 5,
+        Sunday = 6
     }
     public class ProgramDay
     {
-
         public int Id { get; set; }
-        public int? TrainingProgramId { get; set; }
+        public required int TrainingProgramId { get; set; }
         // Navigation property
         public TrainingProgram? TrainingProgram { get; set; }
         public int Position { get; set; } // Order in the week or program

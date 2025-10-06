@@ -2,18 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
+using api.Models;
 
-namespace api.Models
+namespace api.Dtos.TrainingProgram
 {
-    public class TrainingProgram
+    public class TrainingProgramDto
     {
         public int Id { get; set; }
-        public required int UserId { get; set; }
+        public int? UserId { get; set; }
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
         public bool IsWeekDaySynced { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public List<ProgramDay> Days { get; set; } = new List<ProgramDay>();
+        public DateTime CreatedAt { get; set; }
+        public List<ProgramDay> Days { get; set; } = [];
     }
 }
