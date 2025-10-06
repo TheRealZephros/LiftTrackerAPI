@@ -1,5 +1,9 @@
 .env
 *.sqlite
 *.db
+*.cache
+*.log
 .idea/
 .vscode/
+api/bin/*
+api/obj/*
