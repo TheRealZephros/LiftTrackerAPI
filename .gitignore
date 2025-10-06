@@ -5,5 +5,22 @@
 *.log
 .idea/
 .vscode/
-api/bin/*
-api/obj/*
+
+# migration files
+Migrations/
+
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+
+# Visual Studio / VSCode cache
+.vs/
+.vscode/
+
+# Optional: logs, temp files, secrets
+*.log
+.env
