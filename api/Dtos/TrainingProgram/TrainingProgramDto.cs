@@ -14,6 +14,6 @@ namespace api.Dtos.TrainingProgram
         public string Description { get; set; } = string.Empty;
         public bool IsWeekDaySynced { get; set; } = true;
         public DateTime CreatedAt { get; set; }
-        public List<ProgramDay> Days { get; set; } = [];
+        public List<ProgramDayDto> Days { get; set; } = new();
     }
 }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using api.Dtos.ExerciseSet;
-
 namespace api.Dtos.ExerciseSession
 {
     public class ExerciseSessionDto

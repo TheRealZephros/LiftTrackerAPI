@@ -8,14 +8,12 @@ namespace api.Models
     public class ExerciseSet
     {
         public int Id { get; set; }
-        public int ExerciseId { get; set; }
-        public int ExerciseSessionId { get; set; }
-        // Navigation property
-        public Exercise? Exercise { get; set; }
-        public int Repetitions { get; set; }
+        public required int ExerciseId { get; set; }
+        public required int ExerciseSessionId { get; set; }
+        public required int Repetitions { get; set; }
          // in kg
         private decimal _weight;
-        public decimal Weight
+        public required decimal Weight
         {
             get => Math.Round(_weight, 2);
             set => _weight = Math.Round(value, 2);

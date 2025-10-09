@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Net.Http.Headers;
 
 namespace api.Models
 {
@@ -15,6 +16,7 @@ namespace api.Models
         Saturday = 5,
         Sunday = 6
     }
+
     public class ProgramDay
     {
         public int Id { get; set; }
@@ -22,17 +24,24 @@ namespace api.Models
         // Navigation property
         public TrainingProgram? TrainingProgram { get; set; }
         public int Position { get; set; } // Order in the week or program
-        public List<Exercise> Exercises { get; set; } = [];
+        public List<ProgrammedExercise> Exercises { get; set; } = new();
+        public string Description { get; set; } = "";
+        public string Notes { get; set; } = "";
+        private string _name = "";
         public string Name
         {
-            get {
-                if (TrainingProgram != null && TrainingProgram.IsWeekDaySynced)
+            get
+            {
+                if (_name == "")
                 {
-                    return ((Weekday)Position).ToString();
+                    return "Day " + Position.ToString();
                 }
-                return "Day " + Position.ToString();
+                return _name;
+            }
+            set
+            {
+                _name = value;
             }
         }
-
     }
 }

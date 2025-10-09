@@ -4,6 +4,8 @@ using api.Dtos.User;
 using api.Models;
 using System.Linq;
 using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
+using api.Interfaces;
 
 namespace api.Controllers
 {
@@ -11,17 +13,17 @@ namespace api.Controllers
     [Route("api/user")]
     public class UserController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
+        private readonly IUserRepository _userRepository;
 
-        public UserController(ApplicationDBContext context)
+        public UserController(IUserRepository userRepository)
         {
-            _context = context;
+            _userRepository = userRepository;
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterUser([FromBody] UserRegisterDto dto)
+        public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto)
         {
-            if (_context.Users.Any(u => u.Username == dto.Username))
+            if (await _userRepository.GetByUsernameAsync(dto.Username) != null)
                 return BadRequest("Username already exists.");
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
@@ -30,17 +32,14 @@ namespace api.Controllers
                 Username = dto.Username,
                 PasswordHash = hashedPassword
             };
-
-            _context.Users.Add(newUser);
-            _context.SaveChanges();
-
+            await _userRepository.CreateUser(newUser);
             return Ok(new { UserId = newUser.Id });
         }
 
         [HttpPost("login")]
-        public IActionResult LoginUser([FromBody] UserLoginDto dto)
+        public async Task<IActionResult> LoginUser([FromBody] UserLoginDto dto)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Username == dto.Username);
+            var user = await _userRepository.GetByUsernameAsync(dto.Username);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid username or password.");
 
@@ -48,16 +47,13 @@ namespace api.Controllers
         }
 
         [HttpDelete("delete")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = _context.Users.Find(id);
+            var user = await _userRepository.DeleteUser(id);
             if (user == null)
                 return NotFound();
-
-            _context.Users.Remove(user);
-            _context.SaveChanges();
-
             return NoContent();
+
         }
     }
 }

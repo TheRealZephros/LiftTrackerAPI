@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using api.Dtos.ExerciseSet;
 using api.Dtos.ExerciseSession;
 using api.Models;
 
@@ -23,5 +22,17 @@ namespace api.Mappers
                 Notes = session.Notes ?? string.Empty
             };
         }
+        public static ExerciseSetDto ToExerciseSetDto(this ExerciseSet set)
+        {
+            return new ExerciseSetDto
+            {
+                Id = set.Id,
+                ExerciseId = set.ExerciseId,
+                ExerciseSessionId = set.ExerciseSessionId,
+                Repetitions = set.Repetitions,
+                Weight = set.Weight,
+            };
+        }
     }
+    
 }
