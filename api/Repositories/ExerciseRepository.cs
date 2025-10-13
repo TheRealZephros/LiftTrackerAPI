@@ -24,7 +24,7 @@ namespace api.Repositories
             return await _context.Exercises.FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public async Task<List<Exercise>> GetAllAsync(int userId)
+        public async Task<List<Exercise>> GetAllAsync(string userId)
         {
             return await _context.Exercises.Where(e => e.UserId == userId).ToListAsync();
         }

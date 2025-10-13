@@ -148,7 +148,7 @@ namespace api.Repositories
                 .FirstOrDefaultAsync(p => p.Id == programId);
         }
 
-        public async Task<List<TrainingProgram>?> GetTrainingProgramsForUser(int userId)
+        public async Task<List<TrainingProgram>?> GetTrainingProgramsForUser(string userId)
         {
             var programs = await _context.TrainingPrograms
                 .Include(p => p.Days)

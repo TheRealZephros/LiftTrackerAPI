@@ -30,7 +30,7 @@ namespace api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllExercises(int userId)
+        public async Task<IActionResult> GetAllExercises(string userId)
         {
             var exercises = await _exerciseRepository.GetAllAsync(userId);
             var exerciseDtos = exercises.Select(e => e.ToExerciseDto());
@@ -51,7 +51,7 @@ namespace api.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateExercise([FromBody] ExerciseDto exercise)
         {
-            if (exercise.UserId == null || !await _userRepository.UserExists((int)exercise.UserId))
+            if (exercise.UserId == null || !await _userRepository.UserExists(exercise.UserId))
             {
                 return BadRequest("User does not exist.");
             }

@@ -11,7 +11,7 @@ namespace api.Models
         // Foreign key
         public required int ExerciseId { get; set; }
         // Foreign key
-        public required int UserId { get; set; }
+        public required string UserId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<ExerciseSet> Sets { get; set; } = new List<ExerciseSet>();
         public string Notes { get; set; } = string.Empty;

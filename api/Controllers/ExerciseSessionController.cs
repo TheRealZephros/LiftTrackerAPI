@@ -27,7 +27,7 @@ namespace api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetExerciseSessionsForUser(int userId)
+        public async Task<IActionResult> GetExerciseSessionsForUser(string userId)
         {
             var sessions = await _exerciseSessionRepository.GetAllAsync(userId);
             return Ok(sessions);

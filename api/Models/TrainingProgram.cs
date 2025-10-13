@@ -9,7 +9,7 @@ namespace api.Models
     public class TrainingProgram
     {
         public int Id { get; set; }
-        public required int UserId { get; set; }
+        public required string UserId { get; set; }
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
         public bool IsWeekDaySynced { get; set; } = true;

@@ -25,7 +25,7 @@ namespace api.Controllers
         // TODO authenticate
         // TODO redo this to use authentication to determine user id
         [HttpGet]
-        public async Task<IActionResult> GetTrainingProgramsForUser(int userId)
+        public async Task<IActionResult> GetTrainingProgramsForUser(string userId)
         {
             var programs = await _programRepository.GetTrainingProgramsForUser(userId);
             return Ok(programs);

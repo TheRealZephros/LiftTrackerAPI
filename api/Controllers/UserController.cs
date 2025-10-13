@@ -23,13 +23,13 @@ namespace api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto)
         {
-            if (await _userRepository.GetByUsernameAsync(dto.Username) != null)
-                return BadRequest("Username already exists.");
+            if (await _userRepository.GetByEmailAsync(dto.Email) != null)
+                return BadRequest("Email already exists.");
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             var newUser = new User
             {
-                Username = dto.Username,
+                Email = dto.Email,
                 PasswordHash = hashedPassword
             };
             await _userRepository.CreateUser(newUser);
@@ -39,15 +39,15 @@ namespace api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> LoginUser([FromBody] UserLoginDto dto)
         {
-            var user = await _userRepository.GetByUsernameAsync(dto.Username);
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized("Invalid email or password.");
 
             return Ok(new { UserId = user.Id });
         }
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userRepository.DeleteUser(id);
             if (user == null)

@@ -14,7 +14,7 @@ namespace api.Interfaces
         Task<bool> ProgramDayExists(int dayId);
         Task<bool> ProgrammedExerciseExists(int id);
         Task<bool> ProgrammedExercisePositionExists(int programDayId, int position);
-        Task<List<TrainingProgram>?> GetTrainingProgramsForUser(int userId);
+        Task<List<TrainingProgram>?> GetTrainingProgramsForUser(string userId);
         Task<TrainingProgram?> GetTrainingProgramById(int programId);
         Task<List<ProgramDay>?> GetDaysByProgramId(int programId);
         Task<ProgramDay?> GetDayById(int dayId);

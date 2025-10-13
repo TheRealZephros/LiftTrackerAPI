@@ -81,7 +81,7 @@ namespace api.Repositories
             return await _context.ExerciseSets.AnyAsync(s => s.Id == setId);
         }
 
-        public async Task<List<ExerciseSession>> GetAllAsync(int userId)
+        public async Task<List<ExerciseSession>> GetAllAsync(string userId)
         {
             return await _context.ExerciseSessions.Where(s => s.UserId == userId).ToListAsync();
         }

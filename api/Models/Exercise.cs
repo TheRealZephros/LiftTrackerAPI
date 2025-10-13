@@ -11,6 +11,6 @@ namespace api.Models
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsUsermade { get; set; } = true;
-        public int? UserId { get; set; } // Nullable for predefined exercises
+        public string? UserId { get; set; } // Nullable for predefined exercises
     }
 }

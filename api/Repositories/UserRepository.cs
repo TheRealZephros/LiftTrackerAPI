@@ -25,7 +25,7 @@ namespace api.Repositories
             return Task.FromResult<User?>(user);
         }
 
-        public async Task<User?> DeleteUser(int id)
+        public async Task<User?> DeleteUser(string id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null) return null;
@@ -35,17 +35,17 @@ namespace api.Repositories
             return user;
         }
 
-        public async Task<User?> GetByIdAsync(int id)
+        public async Task<User?> GetByIdAsync(string id)
         {
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<User?> GetByUsernameAsync(string username)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<bool> UserExists(int userId)
+        public async Task<bool> UserExists(string userId)
         {
             return await _context.Users.AnyAsync(u => u.Id == userId);
         }
