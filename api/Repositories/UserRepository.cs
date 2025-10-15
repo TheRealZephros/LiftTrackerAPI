@@ -18,7 +18,7 @@ namespace api.Repositories
             _context = context;
         }
 
-        public Task<User?> CreateUser(User user)
+        public Task<User?> CreateUser(User user, string password)
         {
             _context.Users.Add(user);
             _context.SaveChanges();

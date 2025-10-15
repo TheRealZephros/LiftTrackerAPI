@@ -23,7 +23,9 @@ namespace api.Models
         public required int TrainingProgramId { get; set; }
         // Navigation property
         public TrainingProgram? TrainingProgram { get; set; }
+        
         public int Position { get; set; } // Order in the week or program
+        public bool IsWeekDaySynced { get; set; } = true;
         public List<ProgrammedExercise> Exercises { get; set; } = new();
         public string Description { get; set; } = "";
         public string Notes { get; set; } = "";
@@ -34,6 +36,8 @@ namespace api.Models
             {
                 if (_name == "")
                 {
+                    if (IsWeekDaySynced)
+                        return ((Weekday)Position - 1).ToString();
                     return "Day " + Position.ToString();
                 }
                 return _name;

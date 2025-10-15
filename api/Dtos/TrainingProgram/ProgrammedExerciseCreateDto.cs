@@ -7,7 +7,6 @@ namespace api.Dtos.TrainingProgram
 {
     public class ProgrammedExerciseCreateDto
     {
-        public required string UserId { get; set; }
         public required int ProgramDayId { get; set; }
         public required int ExerciseId { get; set; }
         public required int Position { get; set; } // Order in the day

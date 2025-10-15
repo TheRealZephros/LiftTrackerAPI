@@ -8,7 +8,6 @@ namespace api.Dtos.TrainingProgram
 {
     public class TrainingProgramCreateDto
     {
-        public required string UserId { get; set; }
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
         public bool IsWeekDaySynced { get; set; } = true;

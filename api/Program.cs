@@ -6,6 +6,9 @@ using api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +20,35 @@ builder.Services.AddControllers()
             Newtonsoft.Json.ReferenceLoopHandling.Ignore;
     });
 
-// Swagger / OpenAPI
+// Swagger / OpenAPI (kept your existing config)
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token (with 'Bearer ' prefix)",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer"
+    });
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
 
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
@@ -29,6 +58,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
     );
 });
 
+// Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -39,13 +69,19 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDBContext>();
 
+// --- JWT: Clear default mapping ---
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+// --- Authentication ---
+var key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme =
     options.DefaultChallengeScheme =
     options.DefaultForbidScheme =
     options.DefaultScheme =
-    options.DefaultSignInScheme = 
+    options.DefaultSignInScheme =
     options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
@@ -57,20 +93,46 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JWT:Audience"],
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"])),
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+        ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha512 }
     };
+
+    // Strip 'Bearer ' prefix if present
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Headers["Authorization"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer "))
+            {
+                context.Token = token.Substring("Bearer ".Length).Trim();
+                Console.WriteLine("Token received (stripped): " + context.Token);
+            }
+            return Task.CompletedTask;
+        }
+    };
+
+    options.Events.OnAuthenticationFailed = context =>
+{
+    Console.WriteLine("Authentication failed: " + context.Exception.Message);
+    Console.WriteLine("Authentication failed: " + context.Exception.Message + "\nstacktrace: " + context.Exception.StackTrace + "\ninner exception: " + context.Exception.InnerException + "\nsource: " + context.Exception.Source + "\ntarget site: " + context.Exception.TargetSite + "\ndata: " + context.Exception.Data);
+    return Task.CompletedTask;
+};
 });
 
-// Dependency Injection for Repositories
+
+// Dependency Injection for Repositories (kept your existing config)
 builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
 builder.Services.AddScoped<IExerciseSessionRepository, ExerciseSessionRepository>();
 builder.Services.AddScoped<ITrainingProgramRepository, TrainingProgramRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITokenService, api.Service.TokenService>();
 
 var app = builder.Build();
 
-// Middleware pipeline
+// Middleware pipeline (kept your existing config)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

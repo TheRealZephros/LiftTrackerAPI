@@ -10,6 +10,7 @@ namespace api.Models
     {
         public int Id { get; set; }
         public required string UserId { get; set; }
+        public User? User { get; set; } // Navigation property
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
         public bool IsWeekDaySynced { get; set; } = true;

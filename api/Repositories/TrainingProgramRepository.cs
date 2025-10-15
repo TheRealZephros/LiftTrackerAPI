@@ -37,7 +37,6 @@ namespace api.Repositories
             if (dto == null) return null;
             var programmedExercise = new ProgrammedExercise
             {
-                UserId = dto.UserId,
                 ProgramDayId = dto.ProgramDayId,
                 ExerciseId = dto.ExerciseId,
                 Position = dto.Position,
@@ -49,14 +48,14 @@ namespace api.Repositories
             return programmedExercise;
         }
 
-        public async Task<TrainingProgram?> CreateTrainingProgram(TrainingProgramCreateDto dto)
+        public async Task<TrainingProgram?> CreateTrainingProgram(string userId, TrainingProgramCreateDto dto)
         {
             if (dto == null) return null;
             var trainingProgram = new TrainingProgram
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                UserId = dto.UserId
+                UserId = userId
             };
             _context.TrainingPrograms.Add(trainingProgram);
             await _context.SaveChangesAsync();
@@ -159,24 +158,27 @@ namespace api.Repositories
            return programs;
         }
 
-        public async Task<bool> ProgramDayExists(int dayId)
+        public async Task<bool> ProgramDayExists(string userId, int dayId)
         {
-            return await _context.ProgramDays.AnyAsync(d => d.Id == dayId);
+            return await _context.ProgramDays.AnyAsync(d => d.Id == dayId && d.TrainingProgram.UserId == userId);
         }
 
-        public async Task<bool> ProgrammedExerciseExists(int id)
+        public async Task<bool> ProgrammedExerciseExists(string userId, int id)
         {
-            return await _context.ProgrammedExercises.AnyAsync(e => e.Id == id);
+            return await _context.ProgrammedExercises.AnyAsync(e => e.Id == id && e.ProgramDay.TrainingProgram.UserId == userId);
         }
 
-        public Task<bool> ProgrammedExercisePositionExists(int programDayId, int position)
+        public Task<bool> ProgrammedExercisePositionExists(string userId, int programDayId, int position)
         {
-            return _context.ProgrammedExercises.AnyAsync(e => e.ProgramDayId == programDayId && e.Position == position);
+            return _context.ProgrammedExercises.AnyAsync(e =>
+                e.ProgramDayId == programDayId
+                && e.Position == position &&
+                e.ProgramDay.TrainingProgram.UserId == userId);
         }
 
-        public async Task<bool> TrainingProgramExists(int programId)
+        public async Task<bool> TrainingProgramExists(string userId, int programId)
         {
-            return await _context.TrainingPrograms.AnyAsync(p => p.Id == programId);
+            return await _context.TrainingPrograms.AnyAsync(p => p.Id == programId && p.UserId == userId);
         }
 
         public async Task<ProgramDay?> UpdateProgramDay(int id, ProgramDayUpdateDto dto)
@@ -203,9 +205,6 @@ namespace api.Repositories
             var programmedExercise = await _context.ProgrammedExercises.FindAsync(id);
             if (programmedExercise == null) return null;
 
-            programmedExercise.UserId = dto.UserId;
-            programmedExercise.ProgramDayId = dto.ProgramDayId;
-            programmedExercise.ExerciseId = dto.ExerciseId;
             programmedExercise.Position = dto.Position;
             programmedExercise.Sets = dto.Sets;
             programmedExercise.Reps = dto.Reps;

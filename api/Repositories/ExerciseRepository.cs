@@ -19,39 +19,37 @@ namespace api.Repositories
             _context = context;
         }
 
-        public async Task<Exercise?> GetByIdAsync(int id)
+        public async Task<Exercise?> GetByIdAsync(string userId, int id)
         {
-            return await _context.Exercises.FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.Exercises.FirstOrDefaultAsync(e => (e.Id == id && e.UserId == userId) || (e.Id == id && !e.IsUsermade));
         }
 
         public async Task<List<Exercise>> GetAllAsync(string userId)
         {
-            return await _context.Exercises.Where(e => e.UserId == userId).ToListAsync();
+            return await _context.Exercises.Where(e => e.UserId == userId || !e.IsUsermade).ToListAsync();
         }
 
-        public async Task<Exercise?> AddAsync(ExerciseDto exerciseDto)
+        public async Task<Exercise> AddAsync(string userId, ExerciseCreateDto exerciseCreateDto)
         {
             var exercise = new Exercise
             {
-                Name = exerciseDto.Name,
-                Description = exerciseDto.Description,
-                IsUsermade = exerciseDto.IsUsermade,
-                UserId = exerciseDto.UserId
+                Name = exerciseCreateDto.Name,
+                Description = exerciseCreateDto.Description,
+                IsUsermade = true,
+                UserId = userId
             };
             _context.Exercises.Add(exercise);
             await _context.SaveChangesAsync();
             return exercise;
         }
 
-        public async Task<Exercise?> UpdateAsync(int id, ExerciseDto exerciseDto)
+        public async Task<Exercise?> UpdateAsync(int id, ExerciseUpdateDto exerciseUpdateDto)
         {
             var exercise = await _context.Exercises.FindAsync(id);
             if (exercise == null) return null;
 
-            exercise.Name = exerciseDto.Name;
-            exercise.Description = exerciseDto.Description;
-            exercise.IsUsermade = exerciseDto.IsUsermade;
-            exercise.UserId = exerciseDto.UserId;
+            exercise.Name = exerciseUpdateDto.Name;
+            exercise.Description = exerciseUpdateDto.Description;
 
             _context.Exercises.Update(exercise);
             await _context.SaveChangesAsync();
@@ -68,9 +66,9 @@ namespace api.Repositories
             return exercise;
         }
 
-        public async Task<bool> ExerciseExists(int exerciseId)
+        public async Task<bool> ExerciseExists(string userId, int exerciseId)
         {
-            return await _context.Exercises.AnyAsync(e => e.Id == exerciseId);
+            return await _context.Exercises.AnyAsync(e => e.Id == exerciseId && e.UserId == userId);
         }
     }
 }

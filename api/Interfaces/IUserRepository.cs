@@ -11,7 +11,7 @@ namespace api.Interfaces
         Task<bool> UserExists(string userId);
         Task<User?> GetByIdAsync(string id);
         Task<User?> GetByEmailAsync(string email);
-        Task<User?> CreateUser(User user);
+        Task<User?> CreateUser(User user, string password);
         Task<User?> DeleteUser(string id);
     }
 }

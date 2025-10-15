@@ -9,11 +9,11 @@ namespace api.Interfaces
 {
     public interface IExerciseRepository
     {
-        Task<bool> ExerciseExists(int exerciseId);
-        Task<Exercise?> GetByIdAsync(int id);
+        Task<bool> ExerciseExists(string userId, int exerciseId);
+        Task<Exercise?> GetByIdAsync(string userId, int id);
         Task<List<Exercise>> GetAllAsync(string userId);
-        Task<Exercise?> AddAsync(ExerciseDto exerciseDto);
-        Task<Exercise?> UpdateAsync(int id, ExerciseDto exerciseDto);
+        Task<Exercise> AddAsync(string userId, ExerciseCreateDto exerciseDto);
+        Task<Exercise?> UpdateAsync(int id, ExerciseUpdateDto exerciseUpdateDto);
         Task<Exercise?> DeleteAsync(int id);
 
     }

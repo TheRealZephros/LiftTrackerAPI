@@ -9,7 +9,9 @@ namespace api.Models
     {
         public int Id { get; set; }
         public required int ExerciseId { get; set; }
+        public Exercise? Exercise { get; set; } // Navigation property
         public required int ExerciseSessionId { get; set; }
+        public ExerciseSession? ExerciseSession { get; set; } // Navigation property
         public required int Repetitions { get; set; }
          // in kg
         private decimal _weight;

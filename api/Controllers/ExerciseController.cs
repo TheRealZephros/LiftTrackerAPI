@@ -4,10 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using api.Data;
 using api.Dtos.Exercise;
+using api.Extensions;
 using api.Interfaces;
 using api.Mappers;
 using api.Models;
 using api.Repositories;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,27 +23,36 @@ namespace api.Controllers
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IExerciseSessionRepository _exerciseSessionRepository;
         private readonly ITrainingProgramRepository _trainingProgramRepository;
-        private readonly IUserRepository _userRepository;
-        public ExerciseController(IExerciseRepository exerciseRepository, IExerciseSessionRepository exerciseSessionRepository, ITrainingProgramRepository trainingProgramRepository, IUserRepository userRepository)
+        private readonly UserManager<User> _userManager;
+
+        public ExerciseController(IExerciseRepository exerciseRepository, IExerciseSessionRepository exerciseSessionRepository, ITrainingProgramRepository trainingProgramRepository, UserManager<User> userManager)
         {
             _exerciseRepository = exerciseRepository;
             _exerciseSessionRepository = exerciseSessionRepository;
             _trainingProgramRepository = trainingProgramRepository;
-            _userRepository = userRepository;
+            _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllExercises(string userId)
+        [Authorize]
+        public async Task<IActionResult> GetAllExercises()
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.GetId();
             var exercises = await _exerciseRepository.GetAllAsync(userId);
             var exerciseDtos = exercises.Select(e => e.ToExerciseDto());
             return Ok(exerciseDtos);
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetExerciseById([FromRoute] int id)
         {
-            var exercise = await _exerciseRepository.GetByIdAsync(id);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.GetId();
+            var exercise = await _exerciseRepository.GetByIdAsync(userId, id);
             if (exercise == null)
             {
                 return NotFound();
@@ -49,13 +61,12 @@ namespace api.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateExercise([FromBody] ExerciseDto exercise)
+        [Authorize]
+        public async Task<IActionResult> CreateExercise([FromBody] ExerciseCreateDto exercise)
         {
-            if (exercise.UserId == null || !await _userRepository.UserExists(exercise.UserId))
-            {
-                return BadRequest("User does not exist.");
-            }
-            var createdExercise = await _exerciseRepository.AddAsync(exercise);
+            var userId = User.GetId();
+
+            var createdExercise = await _exerciseRepository.AddAsync(userId, exercise);
             if (createdExercise == null)
             {
                 return BadRequest();
@@ -64,8 +75,18 @@ namespace api.Controllers
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateExercise([FromRoute] int id, [FromBody] ExerciseDto exercise)
+        [Authorize]
+        public async Task<IActionResult> UpdateExercise([FromRoute] int id, [FromBody] ExerciseUpdateDto exercise)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.GetId();
+            var exists = await _exerciseRepository.ExerciseExists(userId, id);
+            if (!exists)
+            {
+                return NotFound();
+            }
+
             var updatedExercise = await _exerciseRepository.UpdateAsync(id, exercise);
             if (updatedExercise == null)
             {
@@ -74,16 +95,22 @@ namespace api.Controllers
             return NoContent();
         }
         [HttpDelete("delete/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteExercise([FromRoute] int id)
         {
-            if (!await _exerciseRepository.ExerciseExists(id))
+            var userId = User.GetId();
+            var exists = await _exerciseRepository.ExerciseExists(userId, id);
+            if (!exists)
             {
                 return NotFound();
             }
             // check if any exercise sessions exist with this exercise id
-            if (await _exerciseSessionRepository.GetSessionsByExerciseId(id) != null)
+            var sessions = await _exerciseSessionRepository.GetSessionsByExerciseId(id);
+            if (sessions != null && sessions.Any())
                 return BadRequest("Cannot delete exercise with existing exercise sessions.");
-            else if (await _trainingProgramRepository.GetExercisesByExerciseId(id) != null)
+            // check if any programmed exercises exist with this exercise id
+            var programmedExercises = await _trainingProgramRepository.GetExercisesByExerciseId(id);
+            if (programmedExercises != null && programmedExercises.Any())
                 return BadRequest("Cannot delete exercise with existing programmed exercises.");
             var deletedExercise = await _exerciseRepository.DeleteAsync(id);
             if (deletedExercise == null)

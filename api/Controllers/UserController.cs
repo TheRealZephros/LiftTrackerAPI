@@ -6,6 +6,7 @@ using System.Linq;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using api.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace api.Controllers
 {
@@ -13,47 +14,94 @@ namespace api.Controllers
     [Route("api/user")]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly ITokenService _tokenService;
 
-        public UserController(IUserRepository userRepository)
+        public UserController(UserManager<User> userManager, SignInManager<User> signInManager, ITokenService tokenService)
         {
-            _userRepository = userRepository;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _tokenService = tokenService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto)
         {
-            if (await _userRepository.GetByEmailAsync(dto.Email) != null)
-                return BadRequest("Email already exists.");
-
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-            var newUser = new User
+            try
             {
-                Email = dto.Email,
-                PasswordHash = hashedPassword
-            };
-            await _userRepository.CreateUser(newUser);
-            return Ok(new { UserId = newUser.Id });
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var newUser = new User
+                {
+                    UserName = dto.UserName,
+                    Email = dto.Email,
+                };
+                var createdUser = await _userManager.CreateAsync(newUser, dto.Password);
+                if (createdUser.Succeeded)
+                {
+                    var roleResult = await _userManager.AddToRoleAsync(newUser, "User");
+                    if (roleResult.Succeeded)
+                    {
+                        return Ok(new UserRegisterReturnDto
+                        {
+                            UserName = newUser.UserName,
+                            Email = newUser.Email,
+                            Token = _tokenService.CreateToken(newUser)
+                        });
+                    }
+                    else
+                    {
+                        await _userManager.DeleteAsync(newUser);
+                        return StatusCode(500, "Failed to assign role to user.");
+                    }
+                }
+                else
+                {
+                    return StatusCode(500, "Failed to create user.");
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> LoginUser([FromBody] UserLoginDto dto)
         {
-            var user = await _userRepository.GetByEmailAsync(dto.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
                 return Unauthorized("Invalid email or password.");
 
-            return Ok(new { UserId = user.Id });
+            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+            if (!result.Succeeded)
+                return Unauthorized("Invalid email or password.");
+
+            return Ok(new UserRegisterReturnDto
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                Token = _tokenService.CreateToken(user)
+            });
         }
 
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            var user = await _userRepository.DeleteUser(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
                 return NotFound();
-            return NoContent();
 
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return StatusCode(500, "Failed to delete user.");
+
+            return NoContent();
         }
     }
 }

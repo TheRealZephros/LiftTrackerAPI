@@ -10,10 +10,10 @@ namespace api.Interfaces
 {
     public interface ITrainingProgramRepository
     {
-        Task<bool> TrainingProgramExists(int programId);
-        Task<bool> ProgramDayExists(int dayId);
-        Task<bool> ProgrammedExerciseExists(int id);
-        Task<bool> ProgrammedExercisePositionExists(int programDayId, int position);
+        Task<bool> TrainingProgramExists(string userId, int programId);
+        Task<bool> ProgramDayExists(string userId, int dayId);
+        Task<bool> ProgrammedExerciseExists(string userId, int id);
+        Task<bool> ProgrammedExercisePositionExists(string userId, int programDayId, int position);
         Task<List<TrainingProgram>?> GetTrainingProgramsForUser(string userId);
         Task<TrainingProgram?> GetTrainingProgramById(int programId);
         Task<List<ProgramDay>?> GetDaysByProgramId(int programId);
@@ -21,7 +21,7 @@ namespace api.Interfaces
         Task<List<ProgrammedExercise>?> GetExercisesByDay(int dayId);
         Task<ProgrammedExercise?> GetExerciseById(int id);
         Task<List<ProgrammedExercise>?> GetExercisesByExerciseId(int exerciseId);
-        Task<TrainingProgram?> CreateTrainingProgram(TrainingProgramCreateDto program);
+        Task<TrainingProgram?> CreateTrainingProgram(string userId, TrainingProgramCreateDto program);
         Task<ProgramDay?> CreateProgramDay(ProgramDayCreateDto programDay);
         Task<ProgrammedExercise?> CreateProgrammedExercise(ProgrammedExerciseCreateDto programmedExercise);
         Task<TrainingProgram?> UpdateTrainingProgram(int id, TrainingProgramUpdateDto program);

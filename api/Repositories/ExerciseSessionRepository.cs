@@ -17,12 +17,12 @@ namespace api.Repositories
         {
             _context = context;
         }
-        public async Task<ExerciseSession?> AddAsync(ExerciseSessionCreateDto exerciseSessionDto)
+        public async Task<ExerciseSession?> AddAsync(string userId, ExerciseSessionCreateDto exerciseSessionDto)
         {
             var exerciseSession = new ExerciseSession
             {
                 ExerciseId = exerciseSessionDto.ExerciseId,
-                UserId = exerciseSessionDto.UserId,
+                UserId = userId,
                 Notes = exerciseSessionDto.Notes,
                 CreatedAt = DateTime.UtcNow,
             };
@@ -71,14 +71,14 @@ namespace api.Repositories
             return set;
         }
 
-        public async Task<bool> ExerciseSessionExists(int sessionId)
+        public async Task<bool> ExerciseSessionExists(string userId, int sessionId)
         {
-            return await _context.ExerciseSessions.AnyAsync(s => s.Id == sessionId);
+            return await _context.ExerciseSessions.AnyAsync(s => s.Id == sessionId && s.UserId == userId);
         }
 
-        public async Task<bool> ExerciseSetExists(int setId)
+        public async Task<bool> ExerciseSetExists(string userId, int setId)
         {
-            return await _context.ExerciseSets.AnyAsync(s => s.Id == setId);
+            return await _context.ExerciseSets.AnyAsync(s => s.Id == setId && s.ExerciseSession.UserId == userId);
         }
 
         public async Task<List<ExerciseSession>> GetAllAsync(string userId)
