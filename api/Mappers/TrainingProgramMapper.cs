@@ -43,7 +43,6 @@ namespace api.Mappers
             return new ProgrammedExerciseDto
             {
                 Id = exercise.Id,
-                UserId = exercise.UserId,
                 ProgramDayId = exercise.ProgramDayId,
                 ExerciseId = exercise.ExerciseId,
                 Position = exercise.Position,
@@ -58,24 +57,12 @@ namespace api.Mappers
         {
             return new TrainingProgramCreateDto
             {
-                UserId = program.UserId,
                 Name = program.Name,
                 Description = program.Description,
                 IsWeekDaySynced = program.IsWeekDaySynced,
             };
         }
 
-        public static TrainingProgram ToTrainingProgram(this TrainingProgramCreateDto dto)
-        {
-            return new TrainingProgram
-            {
-                UserId = dto.UserId,
-                Name = dto.Name,
-                Description = dto.Description,
-                IsWeekDaySynced = dto.IsWeekDaySynced,
-                Days = new List<ProgramDay>()
-            };
-        }
 
         public static ProgramDay ToProgramDay(this ProgramDayCreateDto dto)
         {
@@ -106,7 +93,6 @@ namespace api.Mappers
         {
             return new ProgrammedExercise
             {
-                UserId = dto.UserId,
                 ProgramDayId = dto.ProgramDayId,
                 ExerciseId = dto.ExerciseId,
                 Position = dto.Position,
@@ -121,7 +107,6 @@ namespace api.Mappers
         {
             return new ProgrammedExerciseCreateDto
             {
-                UserId = exercise.UserId,
                 ProgramDayId = exercise.ProgramDayId,
                 ExerciseId = exercise.ExerciseId,
                 Position = exercise.Position,

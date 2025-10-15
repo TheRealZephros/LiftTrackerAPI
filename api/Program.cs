@@ -121,7 +121,19 @@ builder.Services.AddAuthentication(options =>
     return Task.CompletedTask;
 };
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173", // Vite
+                "http://localhost:3000"  // CRA
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 // Dependency Injection for Repositories (kept your existing config)
 builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
@@ -140,6 +152,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowLocalhost");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
