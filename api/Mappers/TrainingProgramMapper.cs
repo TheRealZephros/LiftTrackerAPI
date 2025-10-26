@@ -116,5 +116,18 @@ namespace api.Mappers
                 Notes = exercise.Notes
             };
         }
+
+        public static ProgramDayDto ToProgramDayDto(this ProgramDayCreateDto dto)
+        {
+            return new ProgramDayDto
+            {
+                Name = dto.Name,
+                TrainingProgramId = dto.TrainingProgramId,
+                Position = dto.Position,
+                Description = dto.Description,
+                Notes = dto.Notes,
+                Exercises = new List<ProgrammedExerciseDto>()
+            };
+        }
     }
 }

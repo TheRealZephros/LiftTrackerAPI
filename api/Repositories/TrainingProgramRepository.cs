@@ -35,6 +35,7 @@ namespace api.Repositories
         public async Task<ProgrammedExercise?> CreateProgrammedExercise(ProgrammedExerciseCreateDto dto)
         {
             if (dto == null) return null;
+            
             var programmedExercise = new ProgrammedExercise
             {
                 ProgramDayId = dto.ProgramDayId,
@@ -111,10 +112,13 @@ namespace api.Repositories
 
         public async Task<List<ProgramDay>?> GetDaysByProgramId(int programId)
         {
+            Console.WriteLine("Getting days for programId: " + programId);
+            Console.WriteLine("Context ProgramDays count: " + _context.ProgramDays.Count());
+
             return await _context.ProgramDays
-                .Include(d => d.Exercises)
                 .Where(d => d.TrainingProgramId == programId)
                 .OrderBy(d => d.Position)
+                .Include(d => d.Exercises)
                 .ToListAsync();
         }
 
@@ -192,7 +196,6 @@ namespace api.Repositories
             programDay.Position = dto.Position;
             programDay.Description = dto.Description;
             programDay.Notes = dto.Notes;
-            programDay.TrainingProgramId = dto.TrainingProgramId;
 
             await _context.SaveChangesAsync();
             return programDay;

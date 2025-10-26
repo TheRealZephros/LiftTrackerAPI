@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers
 {
-    [Route("api/session")]
+    [Route("api/sessions")]
     [ApiController]
     public class ExerciseSessionController : ControllerBase
     {
@@ -38,7 +38,7 @@ namespace api.Controllers
                 return BadRequest(ModelState);
             var userId = User.GetId();
             var sessions = await _exerciseSessionRepository.GetAllAsync(userId);
-            return Ok(sessions);
+            return Ok(sessions.Select(s => s.ToExerciseSessionDto()).ToList());
         }
 
         [HttpGet("{sessionId}")]
@@ -56,22 +56,27 @@ namespace api.Controllers
             return Ok(session.ToExerciseSessionDto());
         }
 
-        [HttpGet("{sessionId}/set")]
+        [HttpGet("{sessionId}/sets")]
         [Authorize]
         public async Task<IActionResult> GetExerciseSetsForSession([FromRoute] int sessionId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var userId = User.GetId();
+            var sessionExists = await _exerciseSessionRepository.ExerciseSessionExists(userId, sessionId);
+            if (!sessionExists)
+            {
+                return NotFound();
+            }
             var sets = await _exerciseSessionRepository.GetSetsBySessionIdAsync(sessionId);
-            if (sets == null || !sets.Any() || sets.First().ExerciseSession.UserId != userId)
+            if (sets == null)
             {
                 return NotFound();
             }
             return Ok(sets.Select(s => s.ToExerciseSetDto()).ToList());
         }
 
-        [HttpGet("set/{setId}")]
+        [HttpGet("sets/{setId}")]
         [Authorize]
         public async Task<IActionResult> GetExerciseSetById([FromRoute] int setId)
         {
@@ -103,7 +108,7 @@ namespace api.Controllers
             return CreatedAtAction(nameof(GetExerciseSessionById), new { sessionId = newSession.Id }, newSession.ToExerciseSessionDto());
         }
 
-        [HttpPost("set/create")]
+        [HttpPost("sets/create")]
         [Authorize]
         public async Task<IActionResult> CreateExerciseSet([FromBody] ExerciseSetCreateDto dto)
         {
@@ -111,12 +116,15 @@ namespace api.Controllers
                 return BadRequest(ModelState);
             var userId = User.GetId();
 
-            if (!await _exerciseRepository.ExerciseExists(userId, dto.ExerciseId))
-                return BadRequest("Exercise does not exist.");
             if (!await _exerciseSessionRepository.ExerciseSessionExists(userId, dto.ExerciseSessionId))
                 return BadRequest("Exercise session does not exist.");
+            var session = await _exerciseSessionRepository.GetByIdAsync(dto.ExerciseSessionId);
+            if (session == null || session.UserId != userId)
+            {
+                return NotFound();
+            }
 
-            var newSet = await _exerciseSessionRepository.AddSetAsync(dto);
+            var newSet = await _exerciseSessionRepository.AddSetAsync(session.ExerciseId,dto);
             if (newSet == null)
             {
                 return StatusCode(500, "A problem happened while handling your request.");
@@ -126,7 +134,7 @@ namespace api.Controllers
 
         [HttpPut("update/{sessionId}")]
         [Authorize]
-        public async Task<IActionResult> UpdateExerciseSession([FromRoute] int sessionId, [FromBody] ExerciseSessionDto dto)
+        public async Task<IActionResult> UpdateExerciseSession([FromRoute] int sessionId, [FromBody] ExerciseSessionUpdateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -145,9 +153,9 @@ namespace api.Controllers
             return Ok(updatedSession.ToExerciseSessionDto());
         }
 
-        [HttpPut("set/update/{setId}")]
+        [HttpPut("sets/update/{setId}")]
         [Authorize]
-        public async Task<IActionResult> UpdateExerciseSet([FromRoute] int setId, [FromBody] ExerciseSetDto dto)
+        public async Task<IActionResult> UpdateExerciseSet([FromRoute] int setId, [FromBody] ExerciseSetUpdateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -186,7 +194,7 @@ namespace api.Controllers
 
             return NoContent();
         }
-        [HttpDelete("set/delete/{setId}")]
+        [HttpDelete("sets/delete/{setId}")]
         [Authorize]
         public async Task<IActionResult> DeleteExerciseSet([FromRoute] int setId)
         {

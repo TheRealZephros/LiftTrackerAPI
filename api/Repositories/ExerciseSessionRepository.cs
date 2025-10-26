@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using api.Data;
@@ -32,11 +33,11 @@ namespace api.Repositories
             return exerciseSession;
         }
 
-        public Task<ExerciseSet?> AddSetAsync(ExerciseSetCreateDto exerciseSetDto)
+        public Task<ExerciseSet?> AddSetAsync(int exerciseId, ExerciseSetCreateDto exerciseSetDto)
         {
             var exerciseSet = new ExerciseSet
             {
-                ExerciseId = exerciseSetDto.ExerciseId,
+                ExerciseId = exerciseId,
                 ExerciseSessionId = exerciseSetDto.ExerciseSessionId,
                 Repetitions = exerciseSetDto.Repetitions,
                 Weight = exerciseSetDto.Weight
@@ -83,7 +84,12 @@ namespace api.Repositories
 
         public async Task<List<ExerciseSession>> GetAllAsync(string userId)
         {
-            return await _context.ExerciseSessions.Where(s => s.UserId == userId).ToListAsync();
+            return (
+                await _context.ExerciseSessions
+                .Where(s => s.UserId == userId)
+                .Include(s => s.Sets)
+                .ToListAsync()
+            );
         }
 
         public async Task<ExerciseSession?> GetByIdAsync(int id)
@@ -111,30 +117,37 @@ namespace api.Repositories
             return await _context.ExerciseSets.Where(s => s.ExerciseSessionId == sessionId).ToListAsync();
         }
 
-        public async Task<ExerciseSession?> UpdateAsync(int id, ExerciseSessionDto exerciseSessionDto)
+        public async Task<ExerciseSession?> UpdateAsync(int id, ExerciseSessionUpdateDto exerciseSessionDto)
         {
             var session = await _context.ExerciseSessions.FindAsync(id);
             if (session == null) return null;
 
             session.ExerciseId = exerciseSessionDto.ExerciseId;
-            session.UserId = exerciseSessionDto.UserId;
             session.Notes = exerciseSessionDto.Notes;
 
             _context.ExerciseSessions.Update(session);
+
+            var sets = await _context.ExerciseSets.Where(s => s.ExerciseSessionId == id).ToListAsync();
+            foreach (var set in sets)
+            {
+                set.ExerciseId = exerciseSessionDto.ExerciseId;
+                _context.ExerciseSets.Update(set);
+            }
+
             await _context.SaveChangesAsync();
             return session;
         }
 
-        public async Task<ExerciseSet?> UpdateSetAsync(int id, ExerciseSetDto exerciseSetDto)
+        public async Task<ExerciseSet?> UpdateSetAsync(int id, ExerciseSetUpdateDto exerciseSetDto)
         {
             var set = await _context.ExerciseSets.FindAsync(id);
             if (set == null) return null;
-            set.ExerciseId = exerciseSetDto.ExerciseId;
-            set.ExerciseSessionId = exerciseSetDto.ExerciseSessionId;
+
             set.Repetitions = exerciseSetDto.Repetitions;
             set.Weight = exerciseSetDto.Weight;
+
             _context.ExerciseSets.Update(set);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return set;
         }
     }

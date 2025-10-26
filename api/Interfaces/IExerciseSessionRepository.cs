@@ -19,9 +19,9 @@ namespace api.Interfaces
         Task<List<ExerciseSet>?> GetSetsByExerciseId(int exerciseId);
         Task<List<ExerciseSession>> GetAllAsync(string userId);
         Task<ExerciseSession?> AddAsync(string userId, ExerciseSessionCreateDto exerciseSessionDto);
-        Task<ExerciseSet?> AddSetAsync(ExerciseSetCreateDto exerciseSetDto);
-        Task<ExerciseSession?> UpdateAsync(int id, ExerciseSessionDto exerciseSessionDto);
-        Task<ExerciseSet?> UpdateSetAsync(int id, ExerciseSetDto exerciseSetDto);
+        Task<ExerciseSet?> AddSetAsync(int exerciseId, ExerciseSetCreateDto exerciseSetDto);
+        Task<ExerciseSession?> UpdateAsync(int id, ExerciseSessionUpdateDto exerciseSessionDto);
+        Task<ExerciseSet?> UpdateSetAsync(int id, ExerciseSetUpdateDto exerciseSetDto);
         Task<ExerciseSession?> DeleteAsync(int id);
         Task<ExerciseSet?> DeleteSetAsync(int id);
     }

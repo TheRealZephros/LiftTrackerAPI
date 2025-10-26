@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 
 namespace api.Dtos.ExerciseSession
 {
-    public class ExerciseSetCreateDto
+    public class ExerciseSetUpdateDto
     {
-        public required int ExerciseSessionId { get; set; }
         public required int Repetitions { get; set; }
-        public required decimal Weight { get; set; }
+        public required decimal Weight { get; set; } // in kg
     }
 }

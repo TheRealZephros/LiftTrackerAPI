@@ -7,7 +7,6 @@ namespace api.Dtos.TrainingProgram
 {
     public class ProgrammedExerciseUpdateDto
     {
-        public required int ExerciseId { get; set; } // Foreign key to Exercise
         public required int Position { get; set; } // Order in the day
         public int Sets { get; set; } = 3;
         public int Reps { get; set; } = 10;

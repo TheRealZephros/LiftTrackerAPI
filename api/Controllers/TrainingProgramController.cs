@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using api.Dtos.TrainingProgram;
 using api.Extensions;
 using api.Interfaces;
+using api.Mappers;
 using api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers
 {
-    [Route("api/program")]
+    [Route("api/programs")]
     [ApiController]
     public class TrainingProgramController : ControllerBase
     {
@@ -35,26 +36,53 @@ namespace api.Controllers
                 return BadRequest(ModelState);
             var userId = User.GetId();
             var programs = await _programRepository.GetTrainingProgramsForUser(userId);
-            if (programs == null || !programs.Any())
+            if (programs == null)
             {
+                Console.WriteLine("No programs found for user " + userId);
                 return NotFound();
             }
-            return Ok(programs);
+            var programDtos = new List<TrainingProgramGetAllDto>();
+            foreach ( var p in programs)
+            {
+                programDtos.Add(new TrainingProgramGetAllDto
+                {
+                    Id = p.Id,
+                    Name = p.Name
+                });
+            }
+            Console.WriteLine("Returning " + programDtos.Count + " programs for user " + userId);
+            return Ok(programDtos);
         }
 
         [HttpGet("{programId}")]
         [Authorize]
         public async Task<IActionResult> GetTrainingProgramById([FromRoute] int programId)
         {
+            Console.WriteLine("GetTrainingProgramById called with programId: " + programId);
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var userId = User.GetId();
+            Console.WriteLine("GetTrainingProgramsForUser called for userId: " + userId);
             var program = await _programRepository.GetTrainingProgramById(programId);
             if (program == null || program.UserId != userId)
             {
+                if (program == null)
+                    Console.WriteLine("Program not found.");
+                else
+                    Console.WriteLine(program.UserId);
                 return NotFound();
             }
-            return Ok(program);
+            var programDto = new TrainingProgramGetByIdDto
+            {
+                Id = program.Id,
+                UserId = program.UserId,
+                Name = program.Name,
+                Description = program.Description,
+                IsWeekDaySynced = program.IsWeekDaySynced,
+                CreatedAt = program.CreatedAt,
+                Days = program.Days?.Select(d => d.ToProgramDayDto()).ToList() ?? new List<ProgramDayDto>()
+            };
+            return Ok(programDto);
         }
 
         [HttpGet("program/{programId}/days")]
@@ -64,15 +92,21 @@ namespace api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var userId = User.GetId();
-            var days = await _programRepository.GetDaysByProgramId(programId);
-            if (days == null || !days.Any() || days.First().TrainingProgram.UserId != userId)
+            if (!await _programRepository.TrainingProgramExists(userId, programId))
             {
                 return NotFound();
             }
-            return Ok(days);
+            var days = await _programRepository.GetDaysByProgramId(programId);
+
+            if (days == null || !days.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(days.Select(d => d.ToProgramDayDto()).ToList());
         }
 
-        [HttpGet("day/{dayId}")]
+        [HttpGet("days/{dayId}")]
         [Authorize]
         public async Task<IActionResult> GetDayById([FromRoute] int dayId)
         {
@@ -80,14 +114,16 @@ namespace api.Controllers
                 return BadRequest(ModelState);
             var userId = User.GetId();
             var day = await _programRepository.GetDayById(dayId);
-            if (day == null || day.TrainingProgram.UserId != userId)
+            if (day == null) return NotFound();
+            if (!await _programRepository.TrainingProgramExists(userId, day.TrainingProgramId))
             {
                 return NotFound();
             }
-            return Ok(day);
+
+            return Ok(day.ToProgramDayDto());
         }
 
-        [HttpGet("day/{dayId}/exercises")]
+        [HttpGet("days/{dayId}/exercises")]
         public async Task<IActionResult> GetExercisesByDay([FromRoute] int dayId)
         {
             if (!ModelState.IsValid)
@@ -98,14 +134,14 @@ namespace api.Controllers
                 return NotFound();
             }
             var exercises = await _programRepository.GetExercisesByDay(dayId);
-            if (exercises == null || !exercises.Any())
+            if (exercises == null)
             {
                 return NotFound();
             }
-            return Ok(exercises);
+            return Ok(exercises.Select(e => e.ToProgrammedExerciseDto()).ToList());
         }
 
-        [HttpGet("exercise/{id}")]
+        [HttpGet("exercises/{id}")]
         [Authorize]
         public async Task<IActionResult> GetExerciseById([FromRoute] int id)
         {
@@ -121,7 +157,7 @@ namespace api.Controllers
             {
                 return NotFound();
             }
-            return Ok(exercise);
+            return Ok(exercise.ToProgrammedExerciseDto());
         }
 
         [HttpPost("create")]
@@ -139,7 +175,7 @@ namespace api.Controllers
             return CreatedAtAction(nameof(GetTrainingProgramById), new { userId = newProgram.UserId, programId = newProgram.Id }, newProgram);
         }
 
-        [HttpPost("day/create")]
+        [HttpPost("days/create")]
         [Authorize]
         public async Task<IActionResult> CreateProgramDay([FromBody] ProgramDayCreateDto programDayDto)
         {
@@ -155,10 +191,10 @@ namespace api.Controllers
             {
                 return NotFound();
             }
-            return CreatedAtAction(nameof(GetDayById), new { id = day.Id }, day);
+            return CreatedAtAction(nameof(GetDayById), new { dayId = day.Id }, day);
         }
 
-        [HttpPost("exercise/create")]
+        [HttpPost("exercises/create")]
         [Authorize]
         public async Task<IActionResult> CreateProgrammedExercise([FromBody] ProgrammedExerciseCreateDto exerciseDto)
         {
@@ -175,9 +211,10 @@ namespace api.Controllers
             var newExercise = await _programRepository.CreateProgrammedExercise(exerciseDto);
             if (newExercise == null)
             {
+                Console.WriteLine("newExercise is null");
                 return NotFound();
             }
-            return CreatedAtAction(nameof(GetExerciseById), new { id = newExercise.Id }, newExercise);
+            return CreatedAtAction(nameof(GetExerciseById), new { id = newExercise.Id }, newExercise.ToProgrammedExerciseDto());
         }
 
         [HttpPut("update/{programId}")]
@@ -199,7 +236,7 @@ namespace api.Controllers
             return NoContent();
         }
 
-        [HttpPut("update/day/{dayId}")]
+        [HttpPut("update/days/{dayId}")]
         [Authorize]
         public async Task<IActionResult> UpdateProgramDay([FromRoute] int dayId, [FromBody] ProgramDayUpdateDto dayDto)
         {
@@ -218,7 +255,7 @@ namespace api.Controllers
             return NoContent();
         }
 
-        [HttpPut("update/exercise/{id}")]
+        [HttpPut("update/exercises/{id}")]
         [Authorize]
         public async Task<IActionResult> UpdateProgrammedExercise([FromRoute] int id, [FromBody] ProgrammedExerciseUpdateDto exerciseDto)
         {
@@ -237,9 +274,9 @@ namespace api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("delete")]
+        [HttpDelete("delete/{programId}")]
         [Authorize]
-        public async Task<IActionResult> DeleteTrainingProgram(int programId)
+        public async Task<IActionResult> DeleteTrainingProgram([FromRoute] int programId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -261,9 +298,9 @@ namespace api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("delete/day")]
+        [HttpDelete("delete/days/{dayId}")]
         [Authorize]
-        public async Task<IActionResult> DeleteProgramDay(int dayId)
+        public async Task<IActionResult> DeleteProgramDay([FromRoute] int dayId)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -276,9 +313,9 @@ namespace api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("delete/exercise/")]
+        [HttpDelete("delete/exercises/{id}")]
         [Authorize]
-        public async Task<IActionResult> DeleteProgrammedExercise(int id)
+        public async Task<IActionResult> DeleteProgrammedExercise([FromRoute] int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
