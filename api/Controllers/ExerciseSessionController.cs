@@ -56,6 +56,21 @@ namespace api.Controllers
             return Ok(session.ToExerciseSessionDto());
         }
 
+        [HttpGet("exercise/{exerciseId}")]
+        [Authorize]
+        public async Task<IActionResult> GetExerciseSessionByExerciseId([FromRoute] int exerciseId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var userId = User.GetId();
+            var sessions = await _exerciseSessionRepository.GetSessionsByExerciseId(exerciseId);
+            if (sessions == null || !sessions.Any() || sessions?[0].UserId != userId)
+            {
+                return NotFound();
+            }
+            return Ok(sessions.Select(s => s.ToExerciseSessionDto()).ToList());
+        }
+
         [HttpGet("{sessionId}/sets")]
         [Authorize]
         public async Task<IActionResult> GetExerciseSetsForSession([FromRoute] int sessionId)

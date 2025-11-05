@@ -25,7 +25,7 @@ namespace api.Repositories
                 ExerciseId = exerciseSessionDto.ExerciseId,
                 UserId = userId,
                 Notes = exerciseSessionDto.Notes,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = exerciseSessionDto.CreatedAt
             };
             // Add exerciseSession to the database
             await _context.ExerciseSessions.AddAsync(exerciseSession);
@@ -94,12 +94,17 @@ namespace api.Repositories
 
         public async Task<ExerciseSession?> GetByIdAsync(int id)
         {
-            return await _context.ExerciseSessions.FindAsync(id);
+            return await _context.ExerciseSessions
+            .Include(s => s.Sets)
+            .FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task<List<ExerciseSession>> GetSessionsByExerciseId(int exerciseId)
         {
-            return await _context.ExerciseSessions.Where(s => s.ExerciseId == exerciseId).ToListAsync();
+            return await _context.ExerciseSessions
+            .Where(s => s.ExerciseId == exerciseId)
+            .Include(s => s.Sets)
+            .ToListAsync();
         }
 
         public async Task<ExerciseSet?> GetSetByIdAsync(int setId)
@@ -124,6 +129,7 @@ namespace api.Repositories
 
             session.ExerciseId = exerciseSessionDto.ExerciseId;
             session.Notes = exerciseSessionDto.Notes;
+            session.CreatedAt = exerciseSessionDto.CreatedAt;
 
             _context.ExerciseSessions.Update(session);
 
