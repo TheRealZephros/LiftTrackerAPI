@@ -64,10 +64,16 @@ namespace api.Controllers
                 return BadRequest(ModelState);
             var userId = User.GetId();
             var sessions = await _exerciseSessionRepository.GetSessionsByExerciseId(exerciseId);
-            if (sessions == null || !sessions.Any() || sessions?[0].UserId != userId)
+            if (sessions == null)
             {
                 return NotFound();
             }
+            
+            if (sessions.Any(s => s.UserId != userId))
+            {
+                return NotFound();
+            }
+
             return Ok(sessions.Select(s => s.ToExerciseSessionDto()).ToList());
         }
 
