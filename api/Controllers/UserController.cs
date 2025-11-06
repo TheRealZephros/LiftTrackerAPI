@@ -82,7 +82,7 @@ namespace api.Controllers
             if (!result.Succeeded)
                 return Unauthorized("Invalid email or password.");
 
-            return Ok(new UserRegisterReturnDto
+            return Ok(new UserLoginReturnDto
             {
                 UserName = user.UserName,
                 Email = user.Email,
