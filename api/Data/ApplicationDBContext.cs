@@ -18,6 +18,7 @@ namespace api.Data
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<ExerciseSession> ExerciseSessions { get; set; }
         public DbSet<ExerciseSet> ExerciseSets { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

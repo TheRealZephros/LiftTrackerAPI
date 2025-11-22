@@ -9,10 +9,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using api.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Controllers + JSON settings
+// Controllers
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
@@ -20,7 +21,7 @@ builder.Services.AddControllers()
             Newtonsoft.Json.ReferenceLoopHandling.Ignore;
     });
 
-// Swagger / OpenAPI (kept your existing config)
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
@@ -28,7 +29,7 @@ builder.Services.AddSwaggerGen(option =>
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Please enter a valid token (with 'Bearer ' prefix)",
+        Description = "Enter a valid JWT token starting with 'Bearer '",
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
         BearerFormat = "JWT",
@@ -39,11 +40,7 @@ builder.Services.AddSwaggerGen(option =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
-                }
+                Reference = new OpenApiReference { Type=ReferenceType.SecurityScheme, Id="Bearer" }
             },
             new string[]{}
         }
@@ -53,9 +50,7 @@ builder.Services.AddSwaggerGen(option =>
 // Database
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
 {
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    );
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // Identity
@@ -69,82 +64,91 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDBContext>();
 
-// --- JWT: Clear default mapping ---
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-// --- Authentication ---
-var key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]);
+// --- JWT Configuration ---
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+var jwtIssuer = builder.Configuration["JWT:Issuer"];
+var jwtAudience = builder.Configuration["JWT:Audience"];
+var jwtSigningKey = builder.Configuration["JWT:SigningKey"];
+
+if (string.IsNullOrWhiteSpace(jwtIssuer) ||
+    string.IsNullOrWhiteSpace(jwtAudience) ||
+    string.IsNullOrWhiteSpace(jwtSigningKey))
+{
+    throw new InvalidOperationException("JWT configuration values are missing. Check appsettings.json or environment variables.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme =
     options.DefaultChallengeScheme =
-    options.DefaultForbidScheme =
     options.DefaultScheme =
-    options.DefaultSignInScheme =
-    options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
+    JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
+        ValidIssuer = jwtIssuer,
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["JWT:Audience"],
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidAudience = jwtAudience,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
+        ValidateIssuerSigningKey = true,
+
+        // Dynamically resolve signing key from current configuration
+        IssuerSigningKeyResolver = (token, securityToken, kid, parameters) =>
+        {
+            var key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]);
+            return new[] { new SymmetricSecurityKey(key) };
+        },
         ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha512 }
     };
 
-    // Strip 'Bearer ' prefix if present
+    // Clean 'Bearer ' prefix
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault();
             if (!string.IsNullOrEmpty(token) && token.StartsWith("Bearer "))
-            {
                 context.Token = token.Substring("Bearer ".Length).Trim();
-                Console.WriteLine("Token received (stripped): " + context.Token);
-            }
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("JWT Authentication failed: " + context.Exception.Message);
             return Task.CompletedTask;
         }
     };
-
-    options.Events.OnAuthenticationFailed = context =>
-{
-    Console.WriteLine("Authentication failed: " + context.Exception.Message);
-    Console.WriteLine("Authentication failed: " + context.Exception.Message + "\nstacktrace: " + context.Exception.StackTrace + "\ninner exception: " + context.Exception.InnerException + "\nsource: " + context.Exception.Source + "\ntarget site: " + context.Exception.TargetSite + "\ndata: " + context.Exception.Data);
-    return Task.CompletedTask;
-};
 });
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost", policy =>
     {
-        policy
-            .WithOrigins(
-                "http://localhost:5173", // Vite
-                "http://localhost:3000"  // CRA
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "http://localhost:3000"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod();
     });
 });
 
-// Dependency Injection for Repositories (kept your existing config)
+// Repositories
 builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
 builder.Services.AddScoped<IExerciseSessionRepository, ExerciseSessionRepository>();
 builder.Services.AddScoped<ITrainingProgramRepository, TrainingProgramRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITokenService, api.Service.TokenService>();
 
 var app = builder.Build();
 
-// Middleware pipeline (kept your existing config)
+// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -152,9 +156,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowLocalhost");
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
