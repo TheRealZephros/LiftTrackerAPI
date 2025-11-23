@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+
 
 namespace api.Dtos.TrainingProgram
 {
     public class ProgrammedExerciseUpdateDto
     {
-        public required int Position { get; set; } // Order in the day
+        [Required]
+        public int Position { get; set; } // Order in the day
         public int Sets { get; set; } = 3;
         public int Reps { get; set; } = 10;
         public double RestTime { get; set; } = 60; // In seconds

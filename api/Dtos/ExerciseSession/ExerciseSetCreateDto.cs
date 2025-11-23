@@ -1,14 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace api.Dtos.ExerciseSession
 {
     public class ExerciseSetCreateDto
     {
-        public required int ExerciseSessionId { get; set; }
-        public required int Repetitions { get; set; }
-        public required decimal Weight { get; set; }
+        [Required]
+        public int ExerciseSessionId { get; set; }
+        [Required]
+        public int Repetitions { get; set; }
+        [Required]
+        public decimal Weight { get; set; }
     }
 }

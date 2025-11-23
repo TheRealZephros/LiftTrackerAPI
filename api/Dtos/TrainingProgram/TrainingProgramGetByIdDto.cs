@@ -1,18 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace api.Dtos.TrainingProgram
 {
     public class TrainingProgramGetByIdDto
     {
-        public required int Id { get; set; }
-        public required string UserId { get; set; }
-        public required string Name { get; set; }
-        public required string Description { get; set; }
-        public required bool IsWeekDaySynced { get; set; }
-        public required DateTime CreatedAt { get; set; }
-        public required List<ProgramDayDto> Days { get; set; } = new();
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string UserId { get; set; }
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        public string Description { get; set; }
+        [Required]
+        public bool IsWeekDaySynced { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [Required]
+        public List<ProgramDayDto> Days { get; set; } = new();
     }
 }

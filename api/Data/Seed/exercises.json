@@ -1,0 +1,242 @@
+[
+  {
+    "Name": "Bench Press",
+    "Description": "Lie on a bench and push a weighted barbell or dumbbells away from your chest, targeting your chest, shoulders, and triceps."
+  },
+  {
+    "Name": "Squat",
+    "Description": "Bend your knees and lower your hips as if sitting back into a chair, then return to standing. Works quads, glutes, hamstrings, and core."
+  },
+  {
+    "Name": "Deadlift",
+    "Description": "Lift a loaded barbell from the floor to hip level while keeping your back straight, engaging your hamstrings, glutes, lower back, and core."
+  },
+  {
+    "Name": "Overhead Press",
+    "Description": "Press a barbell or dumbbells from shoulder height to overhead, strengthening shoulders, triceps, and upper chest."
+  },
+  {
+    "Name": "Pull-Up",
+    "Description": "Hang from a bar and pull your body upward until your chin passes the bar, targeting back, biceps, and shoulders."
+  },
+  {
+    "Name": "Barbell Row",
+    "Description": "Bend forward at the hips with a barbell in hand and pull it toward your lower chest, working back, traps, and biceps."
+  },
+  {
+    "Name": "Lunge",
+    "Description": "Step forward with one leg and lower your hips until both knees are bent at roughly 90 degrees, engaging quads, glutes, and hamstrings."
+  },
+  {
+    "Name": "Dumbbell Fly",
+    "Description": "Lie on a bench holding dumbbells above your chest, then lower them out to your sides and back up, stretching and contracting the chest muscles."
+  },
+  {
+    "Name": "Plank",
+    "Description": "Hold your body in a straight line on your elbows and toes, engaging the core, shoulders, and glutes."
+  },
+  {
+    "Name": "Bicep Curl",
+    "Description": "Lift a dumbbell or barbell by bending your elbow, isolating and strengthening the bicep muscles."
+  },
+  {
+    "Name": "Tricep Dips",
+    "Description": "Lower and raise your body using your arms on parallel bars or a bench, targeting triceps and chest."
+  },
+  {
+    "Name": "Leg Press",
+    "Description": "Push a weighted platform away with your legs while seated, focusing on quads, glutes, and hamstrings."
+  },
+  {
+    "Name": "Lat Pulldown",
+    "Description": "Pull a bar down toward your chest on a cable machine, engaging your lats, biceps, and rear shoulders."
+  },
+  {
+    "Name": "Chest Dip",
+    "Description": "Lean slightly forward on parallel bars and lower your body, working chest, shoulders, and triceps."
+  },
+  {
+    "Name": "Russian Twist",
+    "Description": "Sit on the floor with knees bent and twist your torso side to side while holding a weight, targeting obliques and core."
+  },
+  {
+    "Name": "Hip Thrust",
+    "Description": "Place your upper back on a bench and thrust your hips upward with a barbell on your hips, emphasizing glutes and hamstrings."
+  },
+  {
+    "Name": "Arnold Press",
+    "Description": "Rotate dumbbells from palms facing you to overhead press, combining shoulder and tricep activation with rotation."
+  },
+  {
+    "Name": "Leg Curl",
+    "Description": "Curl your legs toward your glutes on a machine, isolating the hamstrings."
+  },
+  {
+    "Name": "Incline Bench Press",
+    "Description": "Lie on an inclined bench and press a barbell or dumbbells upward, emphasizing upper chest and shoulders."
+  },
+  {
+    "Name": "Mountain Climbers",
+    "Description": "From a push-up position, alternate driving knees toward your chest quickly, engaging core, shoulders, and cardio endurance."
+  },
+  {
+    "Name": "Chest Press Machine",
+    "Description": "Push the handles of the chest press machine away from your body, focusing on chest, shoulders, and triceps."
+  },
+  {
+    "Name": "Seated Row",
+    "Description": "Sit at a cable row machine and pull the handle toward your torso, engaging back muscles and biceps."
+  },
+  {
+    "Name": "Leg Extension",
+    "Description": "Extend your legs against a padded lever on a machine to isolate and strengthen the quadriceps."
+  },
+  {
+    "Name": "Calf Raise",
+    "Description": "Raise your heels off the ground while standing or on a step, targeting the calf muscles."
+  },
+  {
+    "Name": "Face Pull",
+    "Description": "Pull a cable toward your face with elbows high, working rear delts, traps, and upper back."
+  },
+  {
+    "Name": "Cable Lateral Raise",
+    "Description": "Lift a cable outward to shoulder height, isolating the lateral deltoids."
+  },
+  {
+    "Name": "Hammer Curl",
+    "Description": "Curl dumbbells with palms facing each other, working biceps and forearms."
+  },
+  {
+    "Name": "Dumbbell Step-Up",
+    "Description": "Step onto a bench or platform while holding dumbbells, working quads, glutes, and balance."
+  },
+  {
+    "Name": "Glute Kickback",
+    "Description": "Kick your leg back while on all fours or using a cable machine, isolating the glutes."
+  },
+  {
+    "Name": "Side Plank",
+    "Description": "Support your body on one elbow and the side of one foot, engaging obliques and core."
+  },
+  {
+    "Name": "Reverse Fly",
+    "Description": "With dumbbells or cables, lift your arms to the side while bent over, targeting rear shoulders and upper back."
+  },
+  {
+    "Name": "Incline Dumbbell Curl",
+    "Description": "Curl dumbbells while lying on an incline bench to stretch and target biceps more intensely."
+  },
+  {
+    "Name": "Skull Crusher",
+    "Description": "Lie on a bench and lower a barbell or dumbbells toward your forehead, targeting the triceps."
+  },
+  {
+    "Name": "Good Morning",
+    "Description": "With a barbell on your shoulders, hinge at the hips while keeping a straight back, engaging hamstrings and lower back."
+  },
+  {
+    "Name": "Farmer's Walk",
+    "Description": "Hold heavy weights in each hand and walk a distance, building grip strength, core, and overall conditioning."
+  },
+  {
+    "Name": "Cable Crunch",
+    "Description": "Pull a cable downward while crunching your torso, focusing on the abdominal muscles."
+  },
+  {
+    "Name": "Front Squat",
+    "Description": "Hold a barbell across the front of your shoulders and perform a squat, emphasizing quads and core."
+  },
+  {
+    "Name": "Single-Leg Deadlift",
+    "Description": "Balance on one leg while lifting a weight, hinging at the hips to work hamstrings, glutes, and stability."
+  },
+  {
+    "Name": "Dumbbell Shrug",
+    "Description": "Lift your shoulders toward your ears while holding dumbbells, targeting traps."
+  },
+  {
+    "Name": "Burpees",
+    "Description": "From standing, drop into a push-up position, perform a push-up, jump back to standing, and jump up, combining strength and cardio."
+  },
+  {
+    "Name": "Pistol Squat",
+    "Description": "Perform a squat on one leg while keeping the other leg extended in front of you, improving balance, strength, and mobility."
+  },
+  {
+    "Name": "Chest-Supported Row",
+    "Description": "Lie face down on an incline bench and pull dumbbells or a barbell toward your torso, isolating the upper back muscles."
+  },
+  {
+    "Name": "Cable Kickback",
+    "Description": "Attach a cable to your ankle and extend your leg backward to work the glutes and hamstrings."
+  },
+  {
+    "Name": "Hanging Leg Raise",
+    "Description": "Hang from a bar and lift your legs straight up to engage the lower abs and hip flexors."
+  },
+  {
+    "Name": "Medicine Ball Slam",
+    "Description": "Lift a medicine ball overhead and slam it to the ground with force, working the core, shoulders, and cardio."
+  },
+  {
+    "Name": "Reverse Lunge with Twist",
+    "Description": "Step backward into a lunge and twist your torso toward the front leg, targeting legs, glutes, and obliques."
+  },
+  {
+    "Name": "Turkish Get-Up",
+    "Description": "Move from lying on the floor to standing while holding a weight overhead, improving full-body strength and stability."
+  },
+  {
+    "Name": "Cable Woodchopper",
+    "Description": "Pull a cable diagonally across your body from high to low, working obliques and core rotational strength."
+  },
+  {
+    "Name": "Zercher Squat",
+    "Description": "Hold a barbell in the crook of your elbows and perform a squat, emphasizing quads, core, and upper back."
+  },
+  {
+    "Name": "Box Jump",
+    "Description": "Jump onto a sturdy platform or box, improving explosive leg power and coordination."
+  },
+  {
+    "Name": "Weighted Pull-Up",
+    "Description": "Perform a pull-up while wearing a weight belt or holding a dumbbell between your legs to increase back and bicep strength."
+  },
+  {
+    "Name": "Step Mill Climb",
+    "Description": "Use a step mill machine to climb continuously, improving leg endurance and cardiovascular fitness."
+  },
+  {
+    "Name": "Overhead Tricep Extension",
+    "Description": "Raise a dumbbell or cable overhead and lower it behind your head, extending the arms to isolate the triceps."
+  },
+  {
+    "Name": "Windmill",
+    "Description": "Hold a weight overhead and bend at the hips to touch the opposite foot, working shoulders, obliques, and hamstrings."
+  },
+  {
+    "Name": "Side Lunge",
+    "Description": "Step to the side and bend the leading knee while keeping the other leg straight, targeting quads, glutes, and inner thighs."
+  },
+  {
+    "Name": "Battle Ropes",
+    "Description": "Move heavy ropes in waves or slams, engaging arms, shoulders, core, and improving cardio."
+  },
+  {
+    "Name": "Sled Push",
+    "Description": "Push a weighted sled across a surface, building leg strength, power, and conditioning."
+  },
+  {
+    "Name": "Bear Crawl",
+    "Description": "Move forward on hands and feet while keeping your hips low, engaging shoulders, core, and legs."
+  },
+  {
+    "Name": "Kettlebell Swing",
+    "Description": "Swing a kettlebell between your legs and up to shoulder height, targeting glutes, hamstrings, hips, and core."
+  },
+  {
+    "Name": "Skater Jump",
+    "Description": "Jump laterally from one leg to the other in a skating motion, improving leg power, balance, and agility."
+  }
+]

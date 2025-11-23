@@ -10,8 +10,43 @@ using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using api.Service;
+using Serilog;
+using Serilog.Events;
+
+// -------------------------
+// SERILOG CONFIGURATION
+// -------------------------
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables()
+        .Build())
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        shared: true,
+        flushToDiskInterval: TimeSpan.FromSeconds(2)
+    )
+    .WriteTo.Seq("http://localhost:5341") // Seq for centralized logging
+    .CreateLogger();
+
+Log.Information("Starting up API...");
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Replace default logging with Serilog
+builder.Host.UseSerilog();
+
+// -------------------------
+// SERVICES
+// -------------------------
 
 // Controllers
 builder.Services.AddControllers()
@@ -66,7 +101,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-// --- JWT Configuration ---
+// JWT Configuration
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 var jwtIssuer = builder.Configuration["JWT:Issuer"];
@@ -98,8 +133,6 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
         ValidateIssuerSigningKey = true,
-
-        // Dynamically resolve signing key from current configuration
         IssuerSigningKeyResolver = (token, securityToken, kid, parameters) =>
         {
             var key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]);
@@ -108,7 +141,6 @@ builder.Services.AddAuthentication(options =>
         ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha512 }
     };
 
-    // Clean 'Bearer ' prefix
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -120,7 +152,7 @@ builder.Services.AddAuthentication(options =>
         },
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("JWT Authentication failed: " + context.Exception.Message);
+            Log.Warning("JWT Authentication failed: {Message}", context.Exception.Message);
             return Task.CompletedTask;
         }
     };
@@ -148,16 +180,99 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
-// Middleware
+// -------------------------
+// SEED ROLES & DEFAULT ADMIN
+// -------------------------
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        // Get RoleManager and UserManager from DI
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<User>>();
+        
+        var dbContext = services.GetRequiredService<ApplicationDBContext>();
+        string exercisesJsonPath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "exercises.json");
+
+        // Seed roles
+        await DbInitializer.SeedRolesAsync(roleManager);
+
+        // Seed default admin user
+        await DbInitializer.SeedAdminAsync(userManager);
+
+        // Seed predefined exercises
+        await DbInitializer.SeedExercisesAsync(dbContext, exercisesJsonPath);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while seeding the database.");
+    }
+}
+
+// -------------------------
+// MIDDLEWARE
+// -------------------------
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Serilog request logging
+app.UseSerilogRequestLogging(options =>
+{
+    // Include CorrelationId automatically
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        if (httpContext.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId))
+        {
+            diagnosticContext.Set("CorrelationId", correlationId.ToString());
+        }
+        else
+        {
+            var newId = Guid.NewGuid().ToString();
+            httpContext.Request.Headers["X-Correlation-ID"] = newId;
+            diagnosticContext.Set("CorrelationId", newId);
+        }
+
+        diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress?.ToString());
+        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+    };
+});
+
+// Optional middleware to ensure every request has a CorrelationId
+app.Use(async (context, next) =>
+{
+    if (!context.Request.Headers.ContainsKey("X-Correlation-ID"))
+        context.Request.Headers["X-Correlation-ID"] = Guid.NewGuid().ToString();
+
+    using (Serilog.Context.LogContext.PushProperty("CorrelationId", context.Request.Headers["X-Correlation-ID"]))
+    {
+        await next();
+    }
+});
+
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalhost");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.Run();
+
+// Start application
+try
+{
+    Log.Information("API is running...");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application failed to start.");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

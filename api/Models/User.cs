@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 
 namespace api.Models
@@ -10,5 +6,7 @@ namespace api.Models
     {
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<TrainingProgram> TrainingPrograms { get; set; } = new List<TrainingProgram>();
+        public List<ExerciseSession> ExerciseSessions { get; set; } = new();
+        public List<Exercise> Exercises { get; set; } = new();
     }
 }

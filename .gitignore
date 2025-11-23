@@ -5,6 +5,9 @@
 *.log
 .idea/
 .vscode/
+publish/
+node_modules/
+logs/
 
 # migration files
 Migrations/

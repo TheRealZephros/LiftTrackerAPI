@@ -17,7 +17,7 @@ namespace api.Mappers
                 Id = exercise.Id,
                 Name = exercise.Name,
                 Description = exercise.Description,
-                IsUsermade = true,
+                IsUsermade = exercise.IsUsermade,
                 UserId = exercise.UserId
             };
         }

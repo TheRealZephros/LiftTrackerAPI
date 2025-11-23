@@ -24,59 +24,77 @@ namespace api.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            List<IdentityRole> roles = new List<IdentityRole>
-            {
-                new IdentityRole
-                {
-                    Name = "User",
-                    NormalizedName = "USER"
-                },
-                new IdentityRole
-                {
-                    Name = "Admin",
-                    NormalizedName = "ADMIN"
-                }
-            };
-
-            modelBuilder.Entity<IdentityRole>().HasData(roles);
-
-            // ------ Define relationships and cascade delete behaviors ------ //
-
-            // Cascade delete for deleted User -> TrainingProgram -> ProgramDays -> ProgrammedExercises
-            modelBuilder.Entity<User>( u => u.HasMany(u => u.TrainingPrograms).WithOne().HasForeignKey(tp => tp.UserId).OnDelete(DeleteBehavior.Cascade));
-            modelBuilder.Entity<TrainingProgram>( t => t.HasMany(tp => tp.Days).WithOne(d => d.TrainingProgram).HasForeignKey(d => d.TrainingProgramId).OnDelete(DeleteBehavior.Cascade));
-            modelBuilder.Entity<ProgramDay>(pd => pd.HasMany(d => d.Exercises).WithOne(e => e.ProgramDay).HasForeignKey(e => e.ProgramDayId).OnDelete(DeleteBehavior.Cascade));
-
-            // Cascade delete for deleted User -> ExerciseSessions -> ExerciseSets
-            modelBuilder.Entity<User>( u => u.HasMany<ExerciseSession>().WithOne().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade));
-            modelBuilder.Entity<ExerciseSession>(s => s.HasMany(s => s.Sets).WithOne().HasForeignKey(s => s.ExerciseSessionId).OnDelete(DeleteBehavior.Cascade));
-
-            // Cascade delete for deleted User -> Exercises
-            modelBuilder.Entity<User>(u => u.HasMany<Exercise>().WithOne().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade));
-            
-            // Cascade delete for deleted ExerciseSession -> ExerciseSets
+            // ----------------------------
+            // Configure decimal precision
+            // ----------------------------
             modelBuilder.Entity<ExerciseSet>()
-                .HasOne<ExerciseSession>()
-                .WithMany(s => s.Sets)
+                .Property(es => es.Weight)
+                .HasPrecision(6, 2); // max 9999.99
+
+            // ----------------------------
+            // USER → TRAINING PROGRAM (Cascade)
+            // ----------------------------
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.TrainingPrograms)
+                .WithOne(tp => tp.User)
+                .HasForeignKey(tp => tp.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // TRAINING PROGRAM → PROGRAM DAYS (Cascade)
+            modelBuilder.Entity<TrainingProgram>()
+                .HasMany(tp => tp.Days)
+                .WithOne(d => d.TrainingProgram)
+                .HasForeignKey(d => d.TrainingProgramId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // PROGRAM DAY → PROGRAMMED EXERCISES (Cascade)
+            modelBuilder.Entity<ProgramDay>()
+                .HasMany(pd => pd.Exercises)
+                .WithOne(pe => pe.ProgramDay)
+                .HasForeignKey(pe => pe.ProgramDayId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ----------------------------
+            // USER → EXERCISES (Cascade)
+            // ----------------------------
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Exercises)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // USER → EXERCISE SESSIONS (Cascade)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.ExerciseSessions)
+                .WithOne(es => es.User)
+                .HasForeignKey(es => es.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // EXERCISE SESSION → EXERCISE SETS (Cascade)
+            modelBuilder.Entity<ExerciseSession>()
+                .HasMany(es => es.Sets)
+                .WithOne(s => s.ExerciseSession)
                 .HasForeignKey(s => s.ExerciseSessionId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
 
-            // ProgrammedExercise → Exercise (restrict delete)
+            // ----------------------------
+            // EXERCISE RELATIONSHIPS (Restrict)
+            // ----------------------------
+            // ProgrammedExercise → Exercise (restrict)
             modelBuilder.Entity<ProgrammedExercise>()
                 .HasOne(pe => pe.Exercise)
                 .WithMany()
                 .HasForeignKey(pe => pe.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ExerciseSession → Exercise (restrict delete)
+            // ExerciseSession → Exercise (restrict)
             modelBuilder.Entity<ExerciseSession>()
-                .HasOne<Exercise>() // you don't need the navigation property
+                .HasOne(es => es.Exercise)
                 .WithMany()
-                .HasForeignKey(s => s.ExerciseId)
+                .HasForeignKey(es => es.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ExerciseSet → Exercise (restrict delete)
+            // ExerciseSet → Exercise (restrict)
             modelBuilder.Entity<ExerciseSet>()
                 .HasOne(es => es.Exercise)
                 .WithMany()
