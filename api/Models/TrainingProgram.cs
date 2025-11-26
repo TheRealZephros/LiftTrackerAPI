@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using api.Models.Interfaces;
 
 namespace api.Models
 {
-    public class TrainingProgram
+    public class TrainingProgram : ISoftDeletable
     {
         public int Id { get; set; }
         [Required]
@@ -14,5 +15,7 @@ namespace api.Models
         public bool IsWeekDaySynced { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<ProgramDay> Days { get; set; } = new List<ProgramDay>();
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

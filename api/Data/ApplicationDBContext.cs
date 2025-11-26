@@ -1,13 +1,15 @@
+using System.Linq.Expressions;
 using api.Models;
+using api.Models.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Data
 {
-    public class ApplicationDBContext : IdentityDbContext<User>
+    public class ApplicationDbContext : IdentityDbContext<User>
     {
-        public ApplicationDBContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions) : base(dbContextOptions)
         {
 
         }
@@ -19,10 +21,22 @@ namespace api.Data
         public DbSet<ExerciseSession> ExerciseSessions { get; set; }
         public DbSet<ExerciseSet> ExerciseSets { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+    {
+            if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .HasQueryFilter(
+                        BuildIsDeletedRestriction(entityType.ClrType)
+                    );
+            }
+    }
 
             // ----------------------------
             // Configure decimal precision
@@ -100,6 +114,13 @@ namespace api.Data
                 .WithMany()
                 .HasForeignKey(es => es.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
+        }
+        private static LambdaExpression BuildIsDeletedRestriction(Type entityType)
+        {
+            var param = Expression.Parameter(entityType, "e");
+            var prop = Expression.Property(param, nameof(ISoftDeletable.IsDeleted));
+            var condition = Expression.Equal(prop, Expression.Constant(false));
+            return Expression.Lambda(condition, param);
         }
     }
 }

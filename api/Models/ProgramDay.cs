@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.Interfaces;
 using Microsoft.Net.Http.Headers;
 
 namespace api.Models
@@ -17,7 +18,7 @@ namespace api.Models
         Sunday = 6
     }
 
-    public class ProgramDay
+    public class ProgramDay : ISoftDeletable
     {
         public int Id { get; set; }
         public required int TrainingProgramId { get; set; }
@@ -47,5 +48,8 @@ namespace api.Models
                 _name = value;
             }
         }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

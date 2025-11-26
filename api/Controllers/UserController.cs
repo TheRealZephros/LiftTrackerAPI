@@ -15,14 +15,14 @@ namespace api.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ITokenService _tokenService;
-        private readonly ApplicationDBContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<UserController> _logger;
 
         public UserController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             ITokenService tokenService,
-            ApplicationDBContext context,
+            ApplicationDbContext context,
             ILogger<UserController> logger
         )
         {

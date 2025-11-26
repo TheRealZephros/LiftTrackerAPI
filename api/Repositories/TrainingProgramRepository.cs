@@ -12,8 +12,8 @@ namespace api.Repositories
 {
     public class TrainingProgramRepository : ITrainingProgramRepository
     {
-        private readonly ApplicationDBContext _context;
-        public TrainingProgramRepository(ApplicationDBContext context)
+        private readonly ApplicationDbContext _context;
+        public TrainingProgramRepository(ApplicationDbContext context)
         {
             _context = context;
         }

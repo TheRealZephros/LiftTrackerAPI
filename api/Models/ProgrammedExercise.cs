@@ -23,5 +23,8 @@ namespace api.Models
         public int Reps { get; set; } = 10;
         public double RestTime { get; set; } = 60; // In seconds
         public string Notes { get; set; } = "";
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

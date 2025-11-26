@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using api.Models.Interfaces;
 
 namespace api.Models
 {
-    public class ExerciseSet
+    public class ExerciseSet : ISoftDeletable
     {
         public int Id { get; set; }
         public required int ExerciseId { get; set; }
@@ -21,5 +18,7 @@ namespace api.Models
             set => _weight = Math.Round(value, 2);
         }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

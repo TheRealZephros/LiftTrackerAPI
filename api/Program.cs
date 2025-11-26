@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using api.Data;
 using api.Interfaces;
+using api.Infrastructure.Auditing;
+using api.Infrastructure.Http;
+using api.Infrastructure.Security;
 using api.Repositories;
 using api.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +15,8 @@ using System.Text;
 using api.Service;
 using Serilog;
 using Serilog.Events;
+using api.Infrastructure.Correlation;
+using api.Infrastructure.Auditing;
 
 // -------------------------
 // SERILOG CONFIGURATION
@@ -82,11 +87,38 @@ builder.Services.AddSwaggerGen(option =>
     });
 });
 
+// Auditing
+builder.Services.AddHttpContextAccessor();
+
+
+builder.Services.AddScoped<IUserContext, UserContext>();
+builder.Services.AddScoped<IHttpContextInfo, HttpContextInfo>();
+builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
+
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+
 // Database
-builder.Services.AddDbContext<ApplicationDBContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
+    var auditInterceptor = sp.GetRequiredService<AuditSaveChangesInterceptor>();
+
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(auditInterceptor);
 });
+
+builder.Services.AddDbContext<AuditDbContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        // keep audit migrations separate
+        sqlOptions => sqlOptions.MigrationsHistoryTable(
+            "__EFMigrationsHistory",
+            "audit"
+        )
+    );
+});
+
+
 
 // Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -97,7 +129,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
 })
-.AddEntityFrameworkStores<ApplicationDBContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>();
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -193,7 +225,7 @@ using (var scope = app.Services.CreateScope())
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<User>>();
         
-        var dbContext = services.GetRequiredService<ApplicationDBContext>();
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
         string exercisesJsonPath = Path.Combine(AppContext.BaseDirectory, "Data", "Seed", "exercises.json");
 
         // Seed roles
@@ -204,6 +236,9 @@ using (var scope = app.Services.CreateScope())
 
         // Seed predefined exercises
         await DbInitializer.SeedExercisesAsync(dbContext, exercisesJsonPath);
+
+        // Seed exercise sessions for admin user if none exist
+        await DbInitializer.SeedExerciseSessionsAsync(dbContext);
     }
     catch (Exception ex)
     {

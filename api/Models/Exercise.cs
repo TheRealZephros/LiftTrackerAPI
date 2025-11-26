@@ -1,18 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using api.Models.Interfaces;
 
 namespace api.Models
 {
-    public class Exercise
+    public class Exercise : ISoftDeletable
     {
         public int Id { get; set; }
+
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsUsermade { get; set; } = true;
         public string? UserId { get; set; } // Nullable for predefined exercises
         public User? User { get; set; } // Navigation property
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }
