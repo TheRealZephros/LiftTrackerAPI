@@ -33,6 +33,29 @@ namespace Tests.Helpers.Infrastructure.Auditing
             return m;
         }
 
+        public static Mock<ICorrelationIdAccessor> MockCorrelationIdAccessor()
+        {
+            var mock = new Mock<ICorrelationIdAccessor>();
+            mock.Setup(m => m.CorrelationId).Returns("test-correlation-id");
+            return mock;
+        }
+
+        public static Mock<IUserContext> MockUserContext()
+        {
+            var mock = new Mock<IUserContext>();
+            mock.Setup(m => m.UserId).Returns("test-user-id");
+            mock.Setup(m => m.UserName).Returns("test-user");
+            return mock;
+        }
+
+        public static Mock<IHttpContextInfo> MockHttpContextInfo()
+        {
+            var mock = new Mock<IHttpContextInfo>();
+            mock.Setup(m => m.IpAddress).Returns("127.0.0.1");
+            return mock;
+        }
+
+
         public static (ApplicationDbContext app, AuditDbContext audit, AuditSaveChangesInterceptor interceptor)
             CreateDbContextsWithInterceptor()
         {
