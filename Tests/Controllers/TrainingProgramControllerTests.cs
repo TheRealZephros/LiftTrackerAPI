@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace api.Tests.Controllers
+namespace Tests.Controllers
 {
     public class TrainingProgramControllerTests
     {
@@ -101,12 +101,13 @@ namespace api.Tests.Controllers
 
             Assert.IsType<NotFoundResult>(result);
         }
+        
         [Fact]
         public async Task GetTrainingProgramsForUser_ReturnsNotFound_WhenRepoReturnsNull()
         {
             var repo = new Mock<ITrainingProgramRepository>();
             repo.Setup(r => r.GetTrainingProgramsForUser("user1"))
-                .ReturnsAsync((IEnumerable<TrainingProgram>)null!);
+                .ReturnsAsync((List<TrainingProgram>)null!);
 
             var controller = CreateController(repo, new Mock<IExerciseRepository>());
 
@@ -178,7 +179,7 @@ namespace api.Tests.Controllers
             repo.Setup(r => r.GetDaysByProgramId(1))
                 .ReturnsAsync(new List<ProgramDay>
                 {
-                    new ProgramDay { Id = 1, Name = "Day 1", Position = 1 }
+                    new ProgramDay { Id = 1, Name = "Day 1", Position = 1, TrainingProgramId = 1 },
                 });
 
             var controller = CreateController(repo, new Mock<IExerciseRepository>());
@@ -267,7 +268,7 @@ namespace api.Tests.Controllers
                 .ReturnsAsync(true);
 
             repo.Setup(r => r.CreateProgramDay(It.IsAny<ProgramDayCreateDto>()))
-                .ReturnsAsync(new ProgramDay { Id = 1 });
+                .ReturnsAsync(new ProgramDay { Id = 1, TrainingProgramId = 1 });
 
             var controller = CreateController(repo, new Mock<IExerciseRepository>());
 
@@ -335,8 +336,8 @@ namespace api.Tests.Controllers
             repo.Setup(r => r.GetDaysByProgramId(1))
                 .ReturnsAsync(new List<ProgramDay>
                 {
-                    new ProgramDay { Id = 1 },
-                    new ProgramDay { Id = 2 }
+                    new ProgramDay { Id = 1, TrainingProgramId = 1 },
+                    new ProgramDay { Id = 2, TrainingProgramId = 1 }
                 });
 
             repo.Setup(r => r.DeleteTrainingProgram(1))

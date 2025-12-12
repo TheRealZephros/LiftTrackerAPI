@@ -9,11 +9,14 @@ namespace api.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions) : base(dbContextOptions)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
-
         }
 
+        // ----------------------------
+        // DBSets
+        // ----------------------------
         public DbSet<TrainingProgram> TrainingPrograms { get; set; }
         public DbSet<ProgramDay> ProgramDays { get; set; }
         public DbSet<ProgrammedExercise> ProgrammedExercises { get; set; }
@@ -21,106 +24,134 @@ namespace api.Data
         public DbSet<ExerciseSession> ExerciseSessions { get; set; }
         public DbSet<ExerciseSet> ExerciseSets { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<AuditLog> AuditLogs { get; set; }
 
+        // ----------------------------
+        // MODEL CONFIGURATION
+        // ----------------------------
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-    {
-            if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
-            {
-                modelBuilder.Entity(entityType.ClrType)
-                    .HasQueryFilter(
-                        BuildIsDeletedRestriction(entityType.ClrType)
-                    );
-            }
-    }
+            ConfigureSoftDeleteFilters(modelBuilder);
+            ConfigurePrecision(modelBuilder);
+            ConfigureUserRelationships(modelBuilder);
+            ConfigureTrainingProgramRelationships(modelBuilder);
+            ConfigureExerciseHierarchy(modelBuilder);
+            ConfigureRestrictRules(modelBuilder);
+        }
 
-            // ----------------------------
-            // Configure decimal precision
-            // ----------------------------
+        // ----------------------------
+        // Soft Delete Global Filters
+        // ----------------------------
+        private void ConfigureSoftDeleteFilters(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
+                {
+                    var filter = BuildSoftDeleteFilter(entityType.ClrType);
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+                }
+            }
+        }
+
+        private static LambdaExpression BuildSoftDeleteFilter(Type entityType)
+        {
+            var param = Expression.Parameter(entityType, "e");
+            var isDeletedProp = Expression.Property(param, nameof(ISoftDeletable.IsDeleted));
+            var predicate = Expression.Equal(isDeletedProp, Expression.Constant(false));
+            return Expression.Lambda(predicate, param);
+        }
+
+        // ----------------------------
+        // Decimal Precision
+        // ----------------------------
+        private static void ConfigurePrecision(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<ExerciseSet>()
                 .Property(es => es.Weight)
-                .HasPrecision(6, 2); // max 9999.99
+                .HasPrecision(6, 2);
+        }
 
-            // ----------------------------
-            // USER → TRAINING PROGRAM (Cascade)
-            // ----------------------------
+        // ----------------------------
+        // User → Programs, Exercises, Sessions
+        // ----------------------------
+        private static void ConfigureUserRelationships(ModelBuilder modelBuilder)
+        {
+            // User → TrainingPrograms (Cascade)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.TrainingPrograms)
                 .WithOne(tp => tp.User)
                 .HasForeignKey(tp => tp.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // TRAINING PROGRAM → PROGRAM DAYS (Cascade)
-            modelBuilder.Entity<TrainingProgram>()
-                .HasMany(tp => tp.Days)
-                .WithOne(d => d.TrainingProgram)
-                .HasForeignKey(d => d.TrainingProgramId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // PROGRAM DAY → PROGRAMMED EXERCISES (Cascade)
-            modelBuilder.Entity<ProgramDay>()
-                .HasMany(pd => pd.Exercises)
-                .WithOne(pe => pe.ProgramDay)
-                .HasForeignKey(pe => pe.ProgramDayId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // ----------------------------
-            // USER → EXERCISES (Cascade)
-            // ----------------------------
+            // User → Exercises (Cascade)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Exercises)
                 .WithOne(e => e.User)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // USER → EXERCISE SESSIONS (Cascade)
+            // User → ExerciseSessions (Cascade)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.ExerciseSessions)
                 .WithOne(es => es.User)
                 .HasForeignKey(es => es.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        }
 
-            // EXERCISE SESSION → EXERCISE SETS (Cascade)
+        // ----------------------------
+        // TrainingProgram → Days → ProgrammedExercises
+        // ----------------------------
+        private static void ConfigureTrainingProgramRelationships(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TrainingProgram>()
+                .HasMany(tp => tp.Days)
+                .WithOne(d => d.TrainingProgram)
+                .HasForeignKey(d => d.TrainingProgramId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProgramDay>()
+                .HasMany(d => d.Exercises)
+                .WithOne(pe => pe.ProgramDay)
+                .HasForeignKey(pe => pe.ProgramDayId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        // ----------------------------
+        // ExerciseSession → Sets
+        // ----------------------------
+        private static void ConfigureExerciseHierarchy(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<ExerciseSession>()
                 .HasMany(es => es.Sets)
                 .WithOne(s => s.ExerciseSession)
                 .HasForeignKey(s => s.ExerciseSessionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        }
 
-            // ----------------------------
-            // EXERCISE RELATIONSHIPS (Restrict)
-            // ----------------------------
-            // ProgrammedExercise → Exercise (restrict)
+        // ----------------------------
+        // Restrict Delete rules for exercises
+        // ----------------------------
+        private static void ConfigureRestrictRules(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<ProgrammedExercise>()
                 .HasOne(pe => pe.Exercise)
                 .WithMany()
                 .HasForeignKey(pe => pe.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ExerciseSession → Exercise (restrict)
             modelBuilder.Entity<ExerciseSession>()
                 .HasOne(es => es.Exercise)
                 .WithMany()
                 .HasForeignKey(es => es.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ExerciseSet → Exercise (restrict)
             modelBuilder.Entity<ExerciseSet>()
                 .HasOne(es => es.Exercise)
                 .WithMany()
                 .HasForeignKey(es => es.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
-        private static LambdaExpression BuildIsDeletedRestriction(Type entityType)
-        {
-            var param = Expression.Parameter(entityType, "e");
-            var prop = Expression.Property(param, nameof(ISoftDeletable.IsDeleted));
-            var condition = Expression.Equal(prop, Expression.Constant(false));
-            return Expression.Lambda(condition, param);
         }
     }
 }

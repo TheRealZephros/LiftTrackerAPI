@@ -5,6 +5,7 @@ using api.Models;
 using api.Interfaces;
 using api.Data;
 using api.Dtos.User;
+using Azure.Core;
 
 namespace api.Controllers
 {
@@ -72,11 +73,11 @@ namespace api.Controllers
 
             _logger.LogInformation("User {userId} logged in successfully.", userId);
 
-            return Ok(new
+            return Ok(new UserLoginResponseDto
             {
-                accessToken,
-                refreshToken,
-                user = new { user.UserName, user.Email }
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                User = new UserInfoDto { UserName = user.UserName, Email = user.Email }
             });
         }
 
@@ -111,7 +112,7 @@ namespace api.Controllers
 
             _logger.LogInformation("New access token issued for user {userId}.", userId);
 
-            return Ok(new { accessToken = newAccessToken });
+            return Ok(new UserRefreshTokenResponseDto { AccessToken = newAccessToken });
         }
 
         // ---------------------------------------
@@ -170,11 +171,15 @@ namespace api.Controllers
 
                 _logger.LogInformation("Registration completed successfully for user {userId}.", userId);
 
-                return Ok(new
+                return Ok(new UserRegisterResponseDto
                 {
-                    user = new { newUser.UserName, newUser.Email },
-                    accessToken,
-                    refreshToken
+                    User = new UserInfoDto
+                    {
+                        UserName = newUser.UserName,
+                        Email = newUser.Email
+                    },
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken
                 });
             }
             catch (Exception e)

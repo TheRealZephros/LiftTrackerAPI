@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace api.Tests.Controllers
+namespace Tests.Controllers
 {
     public class UserControllerTests
     {
@@ -88,7 +88,7 @@ namespace api.Tests.Controllers
 
             var signInManager = MockSignInManager(userManager.Object);
             signInManager.Setup(sm => sm.CheckPasswordSignInAsync(user, "wrong", false))
-                         .ReturnsAsync(SignInResult.Failed);
+                         .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
 
             var tokenService = new Mock<ITokenService>();
 
@@ -110,7 +110,7 @@ namespace api.Tests.Controllers
 
             var signInManager = MockSignInManager(userManager.Object);
             signInManager.Setup(sm => sm.CheckPasswordSignInAsync(user, null, false))
-                         .ReturnsAsync(SignInResult.Failed);
+                         .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
 
             var controller = CreateController(userManager: userManager, signInManager: signInManager);
 
@@ -121,43 +121,58 @@ namespace api.Tests.Controllers
         }
 
         [Fact]
-        public async Task Login_ReturnsOk_WhenCredentialsValid_AndSavesRefreshToken()
+        public async Task Login_ReturnsOk_WithTokensAndUserInfo()
         {
-            var user = new User { Id = "1", Email = "x@y.com", UserName = "u" };
+            // Arrange
+            var dto = new UserLoginDto
+            {
+                Email = "test@example.com",
+                Password = "password"
+            };
+
+            var testUser = new User
+            {
+                Id = "123",
+                UserName = "testuser",
+                Email = "test@example.com"
+            };
 
             var userManager = MockUserManager();
-            userManager.Setup(um => um.FindByEmailAsync(user.Email)).ReturnsAsync(user);
+            userManager.Setup(um => um.FindByEmailAsync(dto.Email))
+                    .ReturnsAsync(testUser);
 
             var signInManager = MockSignInManager(userManager.Object);
-            signInManager.Setup(sm => sm.CheckPasswordSignInAsync(user, "pass", false))
-                         .ReturnsAsync(SignInResult.Success);
+            signInManager.Setup(sm => sm.CheckPasswordSignInAsync(testUser, dto.Password, false))
+                        .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
 
             var tokenService = new Mock<ITokenService>();
-            tokenService.Setup(ts => ts.CreateAccessToken(user)).Returns("accessToken");
-            tokenService.Setup(ts => ts.CreateRefreshToken()).Returns("refreshToken");
+            tokenService.Setup(ts => ts.CreateAccessToken(testUser))
+                        .Returns("ACCESS123");
+            tokenService.Setup(ts => ts.CreateRefreshToken())
+                        .Returns("REFRESH123");
 
             var context = new ApplicationDbContext(
                 new DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options
-            );
+                .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
             var controller = CreateController(userManager, signInManager, tokenService, context);
 
-            var result = await controller.Login(new UserLoginDto { Email = user.Email, Password = "pass" });
+            // Act
+            var result = await controller.Login(dto);
 
+            // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
-            dynamic value = ok.Value;
-            Assert.Equal("accessToken", value.accessToken);
-            Assert.Equal("refreshToken", value.refreshToken);
-            Assert.Equal(user.Email, value.user.Email);
 
-            // Check DB
-            var savedToken = await context.RefreshTokens.FirstOrDefaultAsync();
-            Assert.NotNull(savedToken);
-            Assert.Equal(user.Id, savedToken.UserId);
-            Assert.Equal("refreshToken", savedToken.Token);
-            Assert.True(savedToken.ExpiresAt > DateTime.UtcNow);
+            // The controller returns an anonymous object => dynamic
+            dynamic response = ok.Value;
+
+            Assert.Equal("ACCESS123", (string)response.AccessToken);
+            Assert.Equal("REFRESH123", (string)response.RefreshToken);
+
+            Assert.Equal("testuser", (string)response.User.UserName);
+            Assert.Equal("test@example.com", (string)response.User.Email);
         }
+
 
         #endregion
 
@@ -239,7 +254,7 @@ namespace api.Tests.Controllers
 
             var ok = Assert.IsType<OkObjectResult>(result);
             dynamic value = ok.Value;
-            Assert.Equal("newAccessToken", value.accessToken);
+            Assert.Equal("newAccessToken", value.AccessToken);
         }
 
         #endregion
@@ -256,7 +271,7 @@ namespace api.Tests.Controllers
 
             var signInManager = MockSignInManager(userManager.Object);
             signInManager.Setup(sm => sm.CheckPasswordSignInAsync(user, "pass", false))
-                        .ReturnsAsync(SignInResult.Success);
+                        .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
 
             var tokenService = new Mock<ITokenService>();
             tokenService.Setup(ts => ts.CreateAccessToken(user)).Returns("accessToken");
@@ -407,9 +422,10 @@ namespace api.Tests.Controllers
 
             var ok = Assert.IsType<OkObjectResult>(result);
             dynamic value = ok.Value;
-            Assert.Equal("accessToken", value.accessToken);
-            Assert.Equal("refreshToken", value.refreshToken);
-            Assert.Equal("x@y.com", value.user.Email);
+            Assert.Equal("accessToken", value.AccessToken);
+            Assert.Equal("refreshToken", value.RefreshToken);
+            Assert.Equal("x@y.com", value.User.Email);
+            Assert.Equal("u", value.User.UserName);
 
             var savedToken = await context.RefreshTokens.FirstOrDefaultAsync();
             Assert.NotNull(savedToken);

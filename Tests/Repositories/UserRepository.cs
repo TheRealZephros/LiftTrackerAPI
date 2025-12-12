@@ -5,7 +5,7 @@ using api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace api.Tests.Repositories
+namespace Tests.Repositories
 {
     public class UserRepositoryTests
     {
@@ -36,7 +36,7 @@ namespace api.Tests.Repositories
             {
                 Id = "user123",
                 Email = "test@example.com",
-                FullName = "Test User"
+                UserName = "Test User"
             };
 
             var result = await repo.CreateUser(user, "password123");

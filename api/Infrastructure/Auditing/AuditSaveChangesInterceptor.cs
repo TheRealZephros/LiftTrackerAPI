@@ -1,9 +1,7 @@
 using api.Data;
-using api.Infrastructure.Correlation;
-using api.Infrastructure.Security;
+using api.Interfaces;
 using api.Models;
 using api.Models.Interfaces;
-using api.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -11,185 +9,104 @@ using System.Text.Json;
 
 namespace api.Infrastructure.Auditing
 {
-    public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
+    public class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
-        private static readonly HashSet<string> IgnoredProperties = new()
-        {
-            "PasswordHash",
-            "SecurityStamp",
-            "ConcurrencyStamp",
-            "RefreshToken",
-            "AccessToken"
-        };
-
         private readonly ICorrelationIdAccessor _correlation;
-        private readonly IUserContext _userContext;
-        private readonly IHttpContextInfo _httpContext;
-        private readonly AuditDbContext _auditContext;
+        private readonly IUserContext _user;
+        private readonly IHttpContextInfo _http;
+        private readonly AuditDbContext _audit;
 
         public AuditSaveChangesInterceptor(
-            ICorrelationIdAccessor correlation,
-            IUserContext userContext,
-            IHttpContextInfo httpContext,
-            AuditDbContext auditContext)
+            ICorrelationIdAccessor corr,
+            IUserContext user,
+            IHttpContextInfo http,
+            AuditDbContext auditDb)
         {
-            _correlation = correlation;
-            _userContext = userContext;
-            _httpContext = httpContext;
-            _auditContext = auditContext;
+            _correlation = corr;
+            _user = user;
+            _http = http;
+            _audit = auditDb;
         }
 
-        // Soft deletes BEFORE save
-        public override InterceptionResult<int> SavingChanges(
+        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
             DbContextEventData eventData,
-            InterceptionResult<int> result)
-        {
-            HandleSoftDeletes(eventData.Context);
-            return result;
-        }
-
-        // Audit AFTER save (non-transactional)
-        public override async ValueTask<int> SavedChangesAsync(
-            SaveChangesCompletedEventData eventData,
-            int result,
-            CancellationToken cancellationToken = default)
+            InterceptionResult<int> result,
+            CancellationToken ct = default)
         {
             var context = eventData.Context;
             if (context == null) return result;
 
-            var auditLogs = CreateAuditEntries(context.ChangeTracker);
+            var entries = context.ChangeTracker.Entries()
+                .Where(e =>
+                    e.Entity is not AuditLog &&
+                    e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+                .ToList();
 
-            if (auditLogs.Count > 0)
+            foreach (var e in entries)
             {
-                _auditContext.AuditLogs.AddRange(auditLogs);
-                await _auditContext.SaveChangesAsync(cancellationToken);
+                HandleEntry(e);
             }
+
+            await _audit.SaveChangesAsync(ct);
 
             return result;
         }
 
-        private void HandleSoftDeletes(DbContext? context)
+        private void HandleEntry(EntityEntry e)
         {
-            if (context == null) return;
+            var entityName = e.Entity.GetType().Name;
+            var entityId = e.Property("Id").CurrentValue?.ToString();
 
-            foreach (var entry in context.ChangeTracker.Entries<ISoftDeletable>())
+            string action = e.State switch
             {
-                if (entry.State == EntityState.Deleted)
+                EntityState.Added => "ADDED",
+                EntityState.Modified => "MODIFIED",
+                EntityState.Deleted => "DELETED",
+                _ => "UNKNOWN"
+            };
+
+            var changedProps = new List<string>();
+            var oldVals = new Dictionary<string, object?>();
+            var newVals = new Dictionary<string, object?>();
+
+            if (e.State == EntityState.Modified)
+            {
+                foreach (var prop in e.Properties)
                 {
-                    entry.State = EntityState.Modified;
-                    entry.Entity.IsDeleted = true;
-                    entry.Entity.DeletedAt = DateTime.UtcNow;
+                    if (!prop.IsModified) continue;
+
+                    changedProps.Add(prop.Metadata.Name);
+                    oldVals[prop.Metadata.Name] = prop.OriginalValue;
+                    newVals[prop.Metadata.Name] = prop.CurrentValue;
                 }
             }
-        }
 
-        private List<AuditLog> CreateAuditEntries(ChangeTracker tracker)
-        {
-            var audits = new List<AuditLog>();
-
-            foreach (var entry in tracker.Entries())
+            if (e.State == EntityState.Deleted && e.Entity is ISoftDeletable del)
             {
-                if (entry.Entity is AuditLog ||
-                    entry.State == EntityState.Unchanged ||
-                    entry.State == EntityState.Detached)
-                    continue;
+                // Soft delete
+                del.IsDeleted = true;
+                del.DeletedAt = DateTime.UtcNow;
+                e.State = EntityState.Modified;
 
-                var audit = new AuditLog
-                {
-                    EntityName = entry.Entity.GetType().Name,
-                    EntityId = GetPrimaryKey(entry),
-                    Action = entry.State.ToString().ToUpper(),
-
-                    // WHO
-                    PerformedByUserId = _userContext.UserId,
-                    PerformedByUserName = _userContext.UserName,
-                    PerformedByUserEmail = _userContext.Email,
-
-                    // WHEN
-                    CreatedAt = DateTime.UtcNow,
-
-                    // WHERE
-                    CorrelationId = _correlation.CorrelationId,
-                    IpAddress = _httpContext.IpAddress,
-                    UserAgent = _httpContext.UserAgent,
-
-                    Source = "API"
-                };
-
-                if (entry.State == EntityState.Modified)
-                {
-                    var diff = GetPropertyDiff(entry);
-
-                    // Skip noise-only updates
-                    if (diff.changedProps == "[]")
-                        continue;
-
-                    audit.OldValues = diff.oldValues;
-                    audit.NewValues = diff.newValues;
-                    audit.ChangedProperties = diff.changedProps;
-                }
-                else if (entry.State == EntityState.Added)
-                {
-                    audit.NewValues = Serialize(entry.CurrentValues);
-                }
-                else if (entry.State == EntityState.Deleted)
-                {
-                    audit.OldValues = Serialize(entry.OriginalValues);
-                }
-
-                audits.Add(audit);
+                changedProps.Add(nameof(ISoftDeletable.IsDeleted));
+                changedProps.Add(nameof(ISoftDeletable.DeletedAt));
             }
 
-            return audits;
-        }
-
-        private static (string oldValues, string newValues, string changedProps) GetPropertyDiff(EntityEntry entry)
-        {
-            var oldDict = new Dictionary<string, object?>();
-            var newDict = new Dictionary<string, object?>();
-            var changed = new List<string>();
-
-            foreach (var prop in entry.Properties)
+            _audit.AuditLogs.Add(new AuditLog
             {
-                if (!prop.IsModified) continue;
-                if (IgnoredProperties.Contains(prop.Metadata.Name)) continue;
-
-                oldDict[prop.Metadata.Name] = prop.OriginalValue;
-                newDict[prop.Metadata.Name] = prop.CurrentValue;
-                changed.Add(prop.Metadata.Name);
-            }
-
-            return (
-                JsonSerializer.Serialize(oldDict),
-                JsonSerializer.Serialize(newDict),
-                JsonSerializer.Serialize(changed)
-            );
-        }
-
-        private static string Serialize(PropertyValues values)
-        {
-            var dict = new Dictionary<string, object?>();
-
-            foreach (var prop in values.Properties)
-            {
-                if (IgnoredProperties.Contains(prop.Name))
-                    continue;
-
-                dict[prop.Name] = values[prop.Name];
-            }
-
-            return JsonSerializer.Serialize(dict);
-        }
-
-        private static string GetPrimaryKey(EntityEntry entry)
-        {
-            var key = entry.Metadata.FindPrimaryKey();
-            if (key == null) return string.Empty;
-
-            var values = key.Properties
-                .Select(p => entry.Property(p.Name).CurrentValue?.ToString());
-
-            return string.Join(",", values);
+                EntityId = entityId ?? "",
+                EntityName = entityName,
+                Action = action,
+                ChangedProperties = JsonSerializer.Serialize(changedProps),
+                OldValues = oldVals.Any() ? JsonSerializer.Serialize(oldVals) : null,
+                NewValues = newVals.Any() ? JsonSerializer.Serialize(newVals) : null,
+                PerformedByUserId = _user.UserId,
+                PerformedByUserName = _user.UserName,
+                PerformedByUserEmail = _user.Email,
+                CorrelationId = _correlation.CorrelationId,
+                IpAddress = _http.IpAddress,
+                UserAgent = _http.UserAgent,
+            });
         }
     }
 }

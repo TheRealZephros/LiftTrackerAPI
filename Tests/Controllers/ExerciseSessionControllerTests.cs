@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace api.Tests.Controllers
+namespace Tests.Controllers
 {
     public class ExerciseSessionControllerTests
     {
@@ -115,7 +115,7 @@ namespace api.Tests.Controllers
             repo.Setup(r => r.GetSetsBySessionIdAsync(1))
                 .ReturnsAsync(new List<ExerciseSet>
                 {
-                    new ExerciseSet { Id = 1, Repetitions = 10, Weight = 50 }
+                    new ExerciseSet { Id = 1, Repetitions = 10, Weight = 50, ExerciseId = 1, ExerciseSessionId = 1 }
                 });
 
             var controller = CreateController(repo, new Mock<IExerciseRepository>());
@@ -173,7 +173,7 @@ namespace api.Tests.Controllers
                 .ReturnsAsync(CreateSession());
 
             repo.Setup(r => r.AddSetAsync(1, It.IsAny<ExerciseSetCreateDto>()))
-                .ReturnsAsync(new ExerciseSet { Id = 1 });
+                .ReturnsAsync(new ExerciseSet { Id = 1, Repetitions = 8, Weight = 60, ExerciseSessionId = 1, ExerciseId = 1 });
 
             var controller = CreateController(repo, new Mock<IExerciseRepository>());
 

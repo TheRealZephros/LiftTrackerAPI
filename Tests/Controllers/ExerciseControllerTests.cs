@@ -12,8 +12,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using System.Security.Claims;
 
-namespace api.Tests.Controllers
+
+namespace Tests.Controllers
 {
     public class ExerciseControllerTests
     {
@@ -41,10 +43,15 @@ namespace api.Tests.Controllers
                 _userManagerMock.Object,
                 _loggerMock.Object);
 
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-            {
-                new Claim("id", _testUserId)
-            }, "mock"));
+            var user = new ClaimsPrincipal(new ClaimsIdentity(
+                new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, _testUserId),
+                    new Claim(ClaimTypes.Name, "testuser"),
+                    new Claim(ClaimTypes.Email, "test@test.com")
+                },
+                "TestAuth"
+            ));
 
             controller.ControllerContext.HttpContext = new DefaultHttpContext
             {
@@ -79,15 +86,23 @@ namespace api.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetAllExercises_ReturnsNotFound_WhenNoExercises()
+        public async Task GetAllExercises_ReturnsOkWithEmptyList_WhenNoExercises()
         {
-            _exerciseRepoMock.Setup(r => r.GetAllAsync(_testUserId))
-                             .ReturnsAsync(new List<Exercise>());
+            // Arrange
+            _exerciseRepoMock
+                .Setup(r => r.GetAllAsync(_testUserId))
+                .ReturnsAsync(new List<Exercise>());
 
             var controller = GetController();
+
+            // Act
             var result = await controller.GetAllExercises();
 
-            Assert.IsType<NotFoundResult>(result);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+
+            var exercises = Assert.IsAssignableFrom<IEnumerable<ExerciseDto>>(okResult.Value);
+            Assert.Empty(exercises);
         }
 
         #endregion
@@ -196,7 +211,7 @@ namespace api.Tests.Controllers
         {
             _exerciseRepoMock.Setup(r => r.ExerciseExists(_testUserId, 1)).ReturnsAsync(true);
             _sessionRepoMock.Setup(r => r.GetSessionsByExerciseId(1)).ReturnsAsync(new List<ExerciseSession>());
-            _trainingRepoMock.Setup(r => r.GetExercisesByExerciseId(1)).ReturnsAsync(new List<object>());
+            _trainingRepoMock.Setup(r => r.GetExercisesByExerciseId(1)).ReturnsAsync(new List<ProgrammedExercise>());
             _exerciseRepoMock.Setup(r => r.DeleteAsync(1)).ReturnsAsync(new Exercise { Id = 1 });
 
             var controller = GetController();
@@ -210,7 +225,7 @@ namespace api.Tests.Controllers
         {
             _exerciseRepoMock.Setup(r => r.ExerciseExists(_testUserId, 1)).ReturnsAsync(true);
             _sessionRepoMock.Setup(r => r.GetSessionsByExerciseId(1))
-                            .ReturnsAsync(new List<ExerciseSession> { new ExerciseSession() });
+                            .ReturnsAsync(new List<ExerciseSession> { new ExerciseSession{ ExerciseId = 1 , UserId = _testUserId} });
 
             var controller = GetController();
             var result = await controller.DeleteExercise(1);
@@ -224,7 +239,7 @@ namespace api.Tests.Controllers
         {
             _exerciseRepoMock.Setup(r => r.ExerciseExists(_testUserId, 1)).ReturnsAsync(true);
             _sessionRepoMock.Setup(r => r.GetSessionsByExerciseId(1)).ReturnsAsync(new List<ExerciseSession>());
-            _trainingRepoMock.Setup(r => r.GetExercisesByExerciseId(1)).ReturnsAsync(new List<object> { new object() });
+            _trainingRepoMock.Setup(r => r.GetExercisesByExerciseId(1)).ReturnsAsync(new List<ProgrammedExercise> { new ProgrammedExercise() });
 
             var controller = GetController();
             var result = await controller.DeleteExercise(1);

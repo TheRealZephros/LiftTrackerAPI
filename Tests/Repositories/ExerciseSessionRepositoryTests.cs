@@ -9,7 +9,7 @@ using api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace api.Tests.Repositories
+namespace Tests.Repositories
 {
     public class ExerciseSessionRepositoryTests
     {
