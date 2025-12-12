@@ -9,15 +9,15 @@ using Tests.Helpers.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using api.Data;
 using api.Infrastructure.Auditing;
 using api.Interfaces;
-
 
 namespace Tests.Infrastructure.Auditing
 {
     public class AuditSaveChangesInterceptorTests
     {
+        #region Helpers
+
         private static async Task<User> AddUser(ApplicationDbContext db)
         {
             var user = AuditInterceptorTestHelpers.CreateSampleUser("x", "x@example.com");
@@ -33,6 +33,10 @@ namespace Tests.Infrastructure.Auditing
                 .OrderByDescending(a => a.CreatedAt)
                 .FirstOrDefaultAsync();
         }
+
+        #endregion
+
+        #region Spy Interceptor
 
         private class SpyAuditInterceptor : AuditSaveChangesInterceptor
         {
@@ -54,7 +58,9 @@ namespace Tests.Infrastructure.Auditing
                 return base.SavingChanges(eventData, result);
             }
 
-            public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
+            public override int SavedChanges(
+                SaveChangesCompletedEventData eventData,
+                int result)
             {
                 WasCalledAfter = true;
                 return base.SavedChanges(eventData, result);
@@ -79,9 +85,11 @@ namespace Tests.Infrastructure.Auditing
             }
         }
 
+        #endregion
 
-        // Assert Interceptor Is Actually Attached
-       [Fact]
+        #region Interceptor Registration Tests
+
+        [Fact]
         public void Interceptor_Is_Registered_On_DbContext()
         {
             var (db, _, interceptor) = AuditInterceptorTestHelpers.CreateDbContextsWithInterceptor();
@@ -117,6 +125,10 @@ namespace Tests.Infrastructure.Auditing
             Assert.Single(auditInterceptors);
             Assert.Equal(interceptor, auditInterceptors[0]);
         }
+
+        #endregion
+
+        #region Interceptor Invocation Tests
 
         [Fact]
         public async Task Interceptor_Is_Invoked_On_SaveChanges()
@@ -156,8 +168,9 @@ namespace Tests.Infrastructure.Auditing
             Assert.True(interceptor.WasCalledAfter);
         }
 
+        #endregion
 
-        // ------------------------------------------------------------
+        #region Audit Behavior Tests
 
         [Fact]
         public async Task AddingUser_CreatesAuditLog()
@@ -199,12 +212,124 @@ namespace Tests.Infrastructure.Auditing
             app.Users.Remove(user);
             await app.SaveChangesAsync();
 
-            var deletedUser = await app.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == user.Id);
+            var deletedUser = await app.Users
+                .IgnoreQueryFilters()
+                .FirstAsync(u => u.Id == user.Id);
+
             Assert.True(deletedUser.IsDeleted);
 
             var auditLog = await LatestAudit(audit, user.Id);
+
             Assert.NotNull(auditLog);
             Assert.Equal("DELETED", auditLog!.Action);
         }
+
+        #endregion
+
+        #region Negative Tests
+
+        [Fact]
+        public async Task No_Changes_No_AuditLog_Created()
+        {
+            var (app, audit, _) = AuditInterceptorTestHelpers.CreateDbContextsWithInterceptor();
+
+            var user = await AddUser(app);
+
+            // No modification, no deletion, no nothing.
+            await app.SaveChangesAsync();
+
+            var audits = await audit.AuditLogs
+                .Where(a => a.EntityId == user.Id)
+                .ToListAsync();
+
+            // Only one audit record should exist: the ADDED record.
+            Assert.Single(audits);
+            Assert.Equal("ADDED", audits[0].Action);
+        }
+
+        [Fact]
+        public async Task Modifying_Untracked_Property_Does_Not_Create_AuditLog()
+        {
+            var (app, audit, _) = AuditInterceptorTestHelpers.CreateDbContextsWithInterceptor();
+
+            var user = await AddUser(app);
+
+            // Modify a property EF Core does NOT track (e.g., a computed property or ignored field).
+            // To emulate this, we clear modified markers manually.
+            user.ConcurrencyStamp = "x-stamp"; // Identity fields are often ignored.
+
+            // Force EF to believe nothing changed.
+            app.Entry(user).State = EntityState.Unchanged;
+
+            await app.SaveChangesAsync();
+
+            var audits = await audit.AuditLogs
+                .Where(a => a.EntityId == user.Id)
+                .OrderBy(a => a.CreatedAt)
+                .ToListAsync();
+
+            // Only the ADDED audit should exist
+            Assert.Single(audits);
+            Assert.Equal("ADDED", audits[0].Action);
+        }
+
+        #endregion
+
+        #region Multi-Entity Tests
+
+        [Fact]
+        public async Task Multiple_Entities_Modified_Produces_Multiple_AuditLogs()
+        {
+            var (app, audit, _) = AuditInterceptorTestHelpers.CreateDbContextsWithInterceptor();
+
+            var u1 = await AddUser(app);
+            var u2 = await AddUser(app);
+
+            u1.UserName = "u1-new";
+            u2.UserName = "u2-new";
+
+            await app.SaveChangesAsync();
+
+            var logs = await audit.AuditLogs
+                .Where(a => a.Action == "MODIFIED")
+                .OrderBy(a => a.EntityId)
+                .ToListAsync();
+
+            Assert.Equal(2, logs.Count);
+
+            Assert.Contains(logs, a => a.EntityId == u1.Id);
+            Assert.Contains(logs, a => a.EntityId == u2.Id);
+
+            Assert.All(logs, a => Assert.Contains("UserName", a.ChangedProperties));
+        }
+
+        [Fact]
+        public async Task Multiple_Entity_Operations_Create_Mixed_AuditLogs()
+        {
+            var (app, audit, _) = AuditInterceptorTestHelpers.CreateDbContextsWithInterceptor();
+
+            var added = AuditInterceptorTestHelpers.CreateSampleUser("new", "n@example.com");
+            app.Users.Add(added);
+
+            var modified = await AddUser(app);
+            modified.Email = "updated@example.com";
+
+            var deleted = await AddUser(app);
+            app.Users.Remove(deleted);
+
+            await app.SaveChangesAsync();
+
+            var logs = await audit.AuditLogs
+                .OrderBy(a => a.CreatedAt)
+                .ToListAsync();
+
+            Assert.Equal(5, logs.Count);
+
+            Assert.Contains(logs, a => a.EntityId == added.Id && a.Action == "ADDED");
+            Assert.Contains(logs, a => a.EntityId == modified.Id && a.Action == "MODIFIED");
+            Assert.Contains(logs, a => a.EntityId == deleted.Id && a.Action == "DELETED");
+        }
+
+        #endregion
     }
 }
