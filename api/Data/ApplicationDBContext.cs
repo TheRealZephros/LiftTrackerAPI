@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
-using api.Models;
-using api.Models.Interfaces;
+using Api.Models;
+using Api.Models.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Data
+namespace Api.Data
 {
     public class ApplicationDbContext : IdentityDbContext<User>
     {

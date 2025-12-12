@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace api.Dtos.Exercise
+namespace Api.Dtos.Exercise
 {
     public class ExerciseDto
     {

@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Models.Interfaces;
+using Api.Models.Interfaces;
 using Microsoft.Net.Http.Headers;
 
-namespace api.Models
+namespace Api.Models
 {
     public enum Weekday
     {

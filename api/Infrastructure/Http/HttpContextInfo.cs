@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
 
-using api.Interfaces;
+using Api.Interfaces;
 
-namespace api.Infrastructure.Http
+namespace Api.Infrastructure.Http
 {
     public class HttpContextInfo : IHttpContextInfo
     {

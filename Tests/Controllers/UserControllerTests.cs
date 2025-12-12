@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using api.Controllers;
-using api.Data;
-using api.Dtos.User;
-using api.Interfaces;
-using api.Models;
+using Api.Controllers;
+using Api.Data;
+using Api.Dtos.User;
+using Api.Interfaces;
+using Api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

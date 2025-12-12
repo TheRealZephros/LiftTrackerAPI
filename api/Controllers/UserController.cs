@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using api.Models;
-using api.Interfaces;
-using api.Data;
-using api.Dtos.User;
+using Api.Models;
+using Api.Interfaces;
+using Api.Data;
+using Api.Dtos.User;
 using Azure.Core;
 
-namespace api.Controllers
+namespace Api.Controllers
 {
     [ApiController]
     [Route("api/user")]

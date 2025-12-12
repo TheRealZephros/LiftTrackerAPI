@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace api.Dtos.User
+namespace Api.Dtos.User
 {
     public class UserLoginDto
     {

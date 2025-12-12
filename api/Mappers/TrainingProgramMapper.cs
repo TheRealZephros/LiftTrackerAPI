@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using api.Dtos.TrainingProgram;
-using api.Models;
+using Api.Dtos.TrainingProgram;
+using Api.Models;
 
-namespace api.Mappers
+namespace Api.Mappers
 {
     public static class TrainingProgramMapper
     {

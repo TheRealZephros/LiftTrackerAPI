@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.Dtos.ExerciseSession
+namespace Api.Dtos.ExerciseSession
 {
     public class ExerciseSessionDto
     {

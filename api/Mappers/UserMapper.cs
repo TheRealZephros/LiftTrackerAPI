@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace api.Mappers
+namespace Api.Mappers
 {
     public static class UserMapper
     {

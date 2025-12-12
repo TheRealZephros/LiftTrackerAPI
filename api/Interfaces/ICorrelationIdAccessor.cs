@@ -1,4 +1,4 @@
-namespace api.Interfaces
+namespace Api.Interfaces
 {
     public interface ICorrelationIdAccessor
     {

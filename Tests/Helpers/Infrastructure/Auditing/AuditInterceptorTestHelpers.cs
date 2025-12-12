@@ -1,7 +1,7 @@
-using api.Data;
-using api.Infrastructure.Auditing;
-using api.Interfaces;
-using api.Models;
+using Api.Data;
+using Api.Infrastructure.Auditing;
+using Api.Interfaces;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 

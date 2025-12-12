@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-using api.Interfaces;
+using Api.Interfaces;
 
-namespace api.Infrastructure.Security
+namespace Api.Infrastructure.Security
 {
     public class UserContext : IUserContext
     {

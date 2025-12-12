@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using api.Data;
-using api.Interfaces;
-using api.Models;
-using api.Dtos.TrainingProgram;
+using Api.Data;
+using Api.Interfaces;
+using Api.Models;
+using Api.Dtos.TrainingProgram;
 
-namespace api.Repositories
+namespace Api.Repositories
 {
     public class TrainingProgramRepository : ITrainingProgramRepository
     {

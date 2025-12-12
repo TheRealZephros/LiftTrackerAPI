@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.Dtos.Exercise;
-using api.Models;
-using api.Repositories;
+using Api.Data;
+using Api.Dtos.Exercise;
+using Api.Models;
+using Api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

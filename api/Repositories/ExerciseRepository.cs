@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.Dtos.Exercise;
-using api.Interfaces;
-using api.Models;
+using Api.Data;
+using Api.Dtos.Exercise;
+using Api.Interfaces;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Repositories
+namespace Api.Repositories
 {
     public class ExerciseRepository : IExerciseRepository
     {

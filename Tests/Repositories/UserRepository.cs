@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using api.Data;
-using api.Models;
-using api.Repositories;
+using Api.Data;
+using Api.Models;
+using Api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

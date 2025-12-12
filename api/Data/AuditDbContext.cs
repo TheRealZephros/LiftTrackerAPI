@@ -1,7 +1,7 @@
-using api.Models;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Data
+namespace Api.Data
 {
     public class AuditDbContext : DbContext
     {

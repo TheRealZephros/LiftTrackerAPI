@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.Models;
+using Api.Data;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Tests.Helpers.Infrastructure.Auditing;
 using Xunit;

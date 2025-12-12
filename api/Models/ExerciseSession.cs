@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Models.Interfaces;
+using Api.Models.Interfaces;
 
-namespace api.Models
+namespace Api.Models
 {
     public class ExerciseSession : ISoftDeletable 
     {

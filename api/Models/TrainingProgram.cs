@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using api.Models.Interfaces;
+using Api.Models.Interfaces;
 
-namespace api.Models
+namespace Api.Models
 {
     public class TrainingProgram : ISoftDeletable
     {

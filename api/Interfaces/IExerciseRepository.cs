@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Dtos.Exercise;
-using api.Models;
+using Api.Dtos.Exercise;
+using Api.Models;
 
-namespace api.Interfaces
+namespace Api.Interfaces
 {
     public interface IExerciseRepository
     {

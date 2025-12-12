@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.Dtos.TrainingProgram
+namespace Api.Dtos.TrainingProgram
 {
     public class TrainingProgramDto
     {

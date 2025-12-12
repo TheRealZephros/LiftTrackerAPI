@@ -1,7 +1,7 @@
-using api.Models.Interfaces;
+using Api.Models.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
-namespace api.Models
+namespace Api.Models
 {
     public class User : IdentityUser, ISoftDeletable
     {

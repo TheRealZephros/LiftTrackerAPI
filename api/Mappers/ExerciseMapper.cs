@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Dtos.Exercise;
-using api.Dtos.ExerciseSession;
-using api.Models;
+using Api.Dtos.Exercise;
+using Api.Dtos.ExerciseSession;
+using Api.Models;
 
-namespace api.Mappers
+namespace Api.Mappers
 {
     public static class ExerciseMapper
     {

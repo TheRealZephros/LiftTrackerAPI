@@ -1,6 +1,6 @@
-using api.Interfaces;
+using Api.Interfaces;
 
-namespace api.Infrastructure.Correlation
+namespace Api.Infrastructure.Correlation
 {
     public sealed class CorrelationIdAccessor : ICorrelationIdAccessor
     {

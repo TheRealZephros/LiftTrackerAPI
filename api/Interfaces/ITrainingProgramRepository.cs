@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.Dtos.TrainingProgram;
-using api.Models;
+using Api.Data;
+using Api.Dtos.TrainingProgram;
+using Api.Models;
 
-namespace api.Interfaces
+namespace Api.Interfaces
 {
     public interface ITrainingProgramRepository
     {

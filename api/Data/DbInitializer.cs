@@ -1,9 +1,9 @@
 using System.Text.Json;
-using api.Models;
+using Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Data
+namespace Api.Data
 {
     public static class DbInitializer
     {

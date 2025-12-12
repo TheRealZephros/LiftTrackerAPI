@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Models;
+using Api.Models;
 
-namespace api.Interfaces
+namespace Api.Interfaces
 {
     public interface IUserRepository
     {

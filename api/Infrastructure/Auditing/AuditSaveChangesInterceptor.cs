@@ -1,13 +1,13 @@
 using System.Text.Json;
-using api.Data;
-using api.Interfaces;
-using api.Models;
-using api.Models.Interfaces;
+using Api.Data;
+using Api.Interfaces;
+using Api.Models;
+using Api.Models.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace api.Infrastructure.Auditing
+namespace Api.Infrastructure.Auditing
 {
     public class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {

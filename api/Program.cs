@@ -1,22 +1,22 @@
 using Microsoft.EntityFrameworkCore;
-using api.Data;
-using api.Interfaces;
-using api.Infrastructure.Auditing;
-using api.Infrastructure.Http;
-using api.Infrastructure.Security;
-using api.Repositories;
-using api.Models;
+using Api.Data;
+using Api.Interfaces;
+using Api.Infrastructure.Auditing;
+using Api.Infrastructure.Http;
+using Api.Infrastructure.Security;
+using Api.Repositories;
+using Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using api.Service;
+using Api.Service;
 using Serilog;
 using Serilog.Events;
-using api.Infrastructure.Correlation;
-using api.Infrastructure.Auditing;
+using Api.Infrastructure.Correlation;
+using Api.Infrastructure.Auditing;
 
 // -------------------------
 // SERILOG CONFIGURATION

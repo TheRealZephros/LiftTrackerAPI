@@ -1,9 +1,9 @@
-using api.Data;
-using api.Interfaces;
-using api.Models;
+using Api.Data;
+using Api.Interfaces;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Repositories
+namespace Api.Repositories
 {
     public class UserRepository : IUserRepository
     {

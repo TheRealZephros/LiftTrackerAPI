@@ -1,4 +1,4 @@
-namespace api.Models.Interfaces
+namespace Api.Models.Interfaces
 {
     public interface ISoftDeletable
     {

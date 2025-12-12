@@ -1,16 +1,16 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using api.Data;
-using api.Models;
+using Api.Data;
+using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Tests.Helpers.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using api.Infrastructure.Auditing;
-using api.Interfaces;
+using Api.Infrastructure.Auditing;
+using Api.Interfaces;
 
 namespace Tests.Infrastructure.Auditing
 {

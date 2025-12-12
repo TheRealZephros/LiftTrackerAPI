@@ -1,13 +1,13 @@
-using api.Dtos.Exercise;
-using api.Extensions;
-using api.Interfaces;
-using api.Mappers;
-using api.Models;
+using Api.Dtos.Exercise;
+using Api.Extensions;
+using Api.Interfaces;
+using Api.Mappers;
+using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace Api.Controllers
 {
     [Route("api/exercises")]
     [ApiController]
