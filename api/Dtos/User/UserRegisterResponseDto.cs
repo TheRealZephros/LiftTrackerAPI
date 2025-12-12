@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.Dtos.User
+namespace Api.Dtos.User
 {
     public class UserRegisterResponseDto
 
